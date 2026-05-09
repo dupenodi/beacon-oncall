@@ -1,0 +1,25 @@
+{
+  "name": "@beacon/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo \"(no eslint in @beacon/api yet)\""
+  },
+  "dependencies": {
+    "@beacon/db": "0.0.0",
+    "drizzle-orm": "^0.41.0",
+    "@hono/node-server": "^1.14.1",
+    "hono": "^4.7.6",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
