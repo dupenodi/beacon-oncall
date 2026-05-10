@@ -190,7 +190,15 @@ export async function approveAndExecuteGithubComment(
       .update(actionRuns)
       .set({ status: "failed", updatedAt: new Date() })
       .where(eq(actionRuns.id, params.runId));
-    return { ok: false, code: "execute_failed", message: exec.message };
+    let message = exec.message;
+    if (exec.status === 404) {
+      const hint =
+        "GitHub returned 404 (repo, issue, or access). Check Settings → GitHub: `owner/repo` must exist, the PAT must allow **Issues: write** (or `repo` on classic), and issue #" +
+        String(input.data.issue_number) +
+        " must exist. Without OPENAI_API_KEY the mock model uses issue #1 unless you set **BEACON_MOCK_GITHUB_ISSUE_NUMBER** on the API.";
+      message = message ? `${message}\n\n${hint}` : hint;
+    }
+    return { ok: false, code: "execute_failed", message };
   }
 
   await db

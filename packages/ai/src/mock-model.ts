@@ -10,13 +10,16 @@ export class MockChatModel implements ChatModel {
     const owner = parts[0] ?? "octocat";
     const repo = parts[1] ?? "Hello-World";
 
+    const issueFromEnv = Number.parseInt(process.env.BEACON_MOCK_GITHUB_ISSUE_NUMBER ?? "1", 10);
+    const issue_number = Number.isFinite(issueFromEnv) && issueFromEnv >= 1 ? issueFromEnv : 1;
+
     yield {
       type: "tool_call_proposed",
       toolName: "github.issue_comment",
       toolInput: {
         owner,
         repo,
-        issue_number: 1,
+        issue_number,
         body: `Beacon (mock): triage note for incident ${input.incidentId} in org ${input.orgId}.`,
       },
       stepIndex: 0,
