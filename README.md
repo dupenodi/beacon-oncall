@@ -154,10 +154,10 @@ GitHub Actions runs `npm ci` and `npm run verify` on pushes/PRs to `main`, plus 
 
 Escalation **timers advance only when** something successfully calls **`POST /internal/tick`** with header **`X-Internal-Auth: <INTERNAL_TICK_SECRET>`** (same secret as the API env). The repository includes two **optional** scheduled workflows:
 
-| Workflow | Default cadence | What it does |
-|----------|-----------------|--------------|
-| [`.github/workflows/tick.yml`](.github/workflows/tick.yml) | Every **5 minutes** (`*/5 * * * *`) | `curl` POSTs to `$API_BASE_URL/internal/tick`. |
-| [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml) | Every **15 minutes** | Runs `beacon-sim steady` against `$SIM_BASE_URL` for synthetic webhook traffic. |
+| Workflow (Actions sidebar) | Default cadence | What it does |
+|----------------------------|-----------------|--------------|
+| **Escalation tick** — [`.github/workflows/tick.yml`](.github/workflows/tick.yml) | Every **5 minutes** (`*/5 * * * *`) | `curl` POSTs to `$API_BASE_URL/internal/tick`. |
+| **Webhook simulator (steady)** — [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml) | Every **15 minutes** | Runs `beacon-sim steady` against `$SIM_BASE_URL` for synthetic webhook traffic. |
 
 **Repository secrets** (Settings → Secrets and variables → Actions):
 
@@ -170,16 +170,20 @@ Both workflows support **`workflow_dispatch`** for manual runs from the Actions 
 
 ## GitHub Actions: first-time setup
 
+**Where workflows live (not under Settings):** open the repo on GitHub → top tab **Actions** → left sidebar **All workflows**. You should see **ci**, **Escalation tick**, and **Webhook simulator (steady)** (names come from each file’s `name:` field). Secrets are under **Settings** → **Secrets and variables** → **Actions** — that page does **not** list workflows.
+
+If **only `ci`** appears, your GitHub default branch probably does not contain `.github/workflows/tick.yml` and `simulate.yml` yet (push/merge `main` from this repo), or **Actions** is turned off for the repository (**Settings** → **Actions** → **General** → allow Actions).
+
 1. In GitHub open **Settings** → **Secrets and variables** → **Actions** → **New repository secret**. Create each secret below; names must match **exactly** (case-sensitive).
 
-2. **Escalation tick** — workflow [`.github/workflows/tick.yml`](.github/workflows/tick.yml) (every **5 minutes** + manual **Run workflow**):
+2. **Escalation tick** — workflow [`.github/workflows/tick.yml`](.github/workflows/tick.yml), sidebar label **Escalation tick** (every **5 minutes** + manual **Run workflow**):
 
    | Secret | What to paste |
    |--------|----------------|
    | `API_BASE_URL` | Your public API origin, e.g. `https://your-api.onrender.com` — **no** trailing slash. |
    | `INTERNAL_TICK_SECRET` | The **same** value as `INTERNAL_TICK_SECRET` on your API server (Render env, etc.). |
 
-3. **Synthetic webhooks** — workflow [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml) (every **15 minutes** + manual run):
+3. **Synthetic webhooks** — workflow [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml), sidebar label **Webhook simulator (steady)** (every **15 minutes** + manual run):
 
    | Secret | What to paste |
    |--------|----------------|
@@ -190,7 +194,7 @@ Both workflows support **`workflow_dispatch`** for manual runs from the Actions 
 
 4. **Allow Actions** (if GitHub shows workflows disabled): **Settings** → **Actions** → **General** → under **Actions permissions**, allow actions for this repository. Forks may not run schedules until you enable workflows on that fork.
 
-5. **Smoke test**: **Actions** → **tick** (or **simulate**) → **Run workflow** → **Run workflow**. Open the run: you should see a successful `POST` / `beacon-sim steady` exit **0**. If secrets are missing, the log says **skipped** and exits **0** (by design).
+5. **Smoke test**: **Actions** → click **Escalation tick** or **Webhook simulator (steady)** in the left list → **Run workflow** (right side, branch `main`) → **Run workflow**. Open the run: you should see a successful `POST` / `beacon-sim steady` exit **0**. If secrets are missing, the log says **skipped** and exits **0** (by design).
 
 6. **Optional local check** (API running, same values in your shell or `.env`): `npm run live:tick` and `npm run live:webhook` from the repo root (see [`.env.example`](.env.example)).
 

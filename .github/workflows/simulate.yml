@@ -1,6 +1,6 @@
 # Optional synthetic webhook traffic (beacon-sim steady). Set all SIM_* secrets or the job no-ops.
 # Intended for staging / demos — do not point at production without safeguards.
-name: simulate
+name: Webhook simulator (steady)
 
 on:
   schedule:
