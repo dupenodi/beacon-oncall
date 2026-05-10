@@ -53,7 +53,7 @@ DATABASE_URL="postgresql://..." APP_MASTER_KEY="$(openssl rand -hex 32)" npm run
 
 The seed prints a **dev-only** webhook plaintext (`whsec_dev_demo_change_me`) for simulators / signed webhooks. User passwords default to **`demo`** (override with `DEMO_SEED_PASSWORD` in `.env`).
 
-**Portfolio / live traffic (optional, minimal):** After deploy, sign in with `owner@demo.invalid` / `demo` / org **`demo`** — the incidents list and [`/public/demo/status`](http://localhost:3000/public/demo/status) are populated from the seed alone. To keep **new** webhook-originated incidents arriving over time, enable [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml) with the `SIM_*` secrets (see [Scheduling: GitHub Actions](#scheduling-github-actions)), or run the simulator CLI occasionally from your laptop.
+**Portfolio / live traffic (optional, minimal):** After deploy, sign in with `owner@demo.invalid` / `demo` / org **`demo`** — the incidents list and [`/public/demo/status`](http://localhost:3000/public/demo/status) are populated from the seed alone. For **new** webhook incidents on a schedule, set the same four variables in GitHub Actions secrets and enable [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml) (see [Scheduling: GitHub Actions](#scheduling-github-actions)). Locally, add `SIM_*` to `.env` (see `.env.example`) with the API running, then run **`npm run live:webhook`** once to test; use **`npm run live:tick`** to advance escalation timers.
 
 ### Auth (CP02)
 

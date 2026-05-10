@@ -19,7 +19,9 @@
     "verify": "npm run build -w @beacon/db -w @beacon/ai && npm run typecheck && npm test && npm run build -w @beacon/web && npm run build -w @beacon/api",
     "db:generate": "npm run generate -w @beacon/db",
     "db:migrate": "npm run migrate -w @beacon/db",
-    "db:seed": "npm run seed -w @beacon/db"
+    "db:seed": "npm run seed -w @beacon/db",
+    "live:webhook": "npm run start -w @beacon/simulator -- steady --baseUrl \"$SIM_BASE_URL\" --orgSlug \"$SIM_ORG_SLUG\" --serviceId \"$SIM_SERVICE_ID\" --secret \"$SIM_WEBHOOK_SECRET\"",
+    "live:tick": "curl -fsS -X POST \"$SIM_BASE_URL/internal/tick\" -H \"X-Internal-Auth: $INTERNAL_TICK_SECRET\""
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
