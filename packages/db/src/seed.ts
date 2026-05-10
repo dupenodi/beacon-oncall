@@ -1,8 +1,3 @@
-import { config as loadEnv } from "dotenv";
-import { resolve } from "node:path";
-
-loadEnv({ path: resolve(process.cwd(), "../../.env") });
-
 /**
  * Dev seed — inserts demo org, users, service, escalation policy (2 steps), binding.
  *
@@ -10,7 +5,10 @@ loadEnv({ path: resolve(process.cwd(), "../../.env") });
  *
  * `APP_MASTER_KEY`: 32-byte key as base64 or 64-char hex (same as API will use for webhook secret crypto).
  */
+import argon2 from "argon2";
+import { config as loadEnv } from "dotenv";
 import { and, eq } from "drizzle-orm";
+import { resolve } from "node:path";
 import { createDb } from "./index";
 import { encryptAes256Gcm, parseMasterKeyFromEnv } from "./crypto";
 import {
@@ -23,6 +21,8 @@ import {
   users,
 } from "./schema";
 
+loadEnv({ path: resolve(process.cwd(), "../../.env") });
+
 const DEMO_WEBHOOK_SECRET = "whsec_dev_demo_change_me";
 
 async function main() {
@@ -34,19 +34,22 @@ async function main() {
 
   const { db, client } = createDb(databaseUrl);
 
+  const demoPassword = process.env.DEMO_SEED_PASSWORD ?? "demo";
+  const passwordHash = await argon2.hash(demoPassword, { type: argon2.argon2id });
+
   const ownerEmail = "owner@demo.invalid".toLowerCase();
   const oncallEmail = "oncall@demo.invalid".toLowerCase();
 
   const [owner] = await db
     .insert(users)
-    .values({ email: ownerEmail, passwordHash: null })
-    .onConflictDoUpdate({ target: users.email, set: { email: ownerEmail } })
+    .values({ email: ownerEmail, passwordHash })
+    .onConflictDoUpdate({ target: users.email, set: { email: ownerEmail, passwordHash } })
     .returning();
 
   const [oncall] = await db
     .insert(users)
-    .values({ email: oncallEmail, passwordHash: null })
-    .onConflictDoUpdate({ target: users.email, set: { email: oncallEmail } })
+    .values({ email: oncallEmail, passwordHash })
+    .onConflictDoUpdate({ target: users.email, set: { email: oncallEmail, passwordHash } })
     .returning();
 
   const cipher = encryptAes256Gcm(DEMO_WEBHOOK_SECRET, masterKey);
@@ -108,6 +111,7 @@ async function main() {
     orgSlug: org.slug,
     ownerEmail,
     oncallEmail,
+    demoPassword,
     serviceId: svc.id,
     policyId: policy.id,
     webhookPlaintextForSimulators: DEMO_WEBHOOK_SECRET,

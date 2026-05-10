@@ -9,7 +9,7 @@ Private **incident routing / escalation** portfolio (multi-tenant API, timer-bas
 | Path | Purpose |
 |------|---------|
 | [`apps/web`](apps/web) | Next.js (App Router) UI |
-| [`apps/api`](apps/api) | Hono HTTP API (`/health`, `/health/db`) |
+| [`apps/api`](apps/api) | Hono HTTP API (`/health`, `/v1/auth/*`, `/v1/orgs/*`) |
 | [`packages/db`](packages/db) | Drizzle schema + migrations |
 
 ## Prerequisites
@@ -48,7 +48,24 @@ After migrate, seed demo data (org `demo`, users, service, 2-step policy):
 DATABASE_URL="postgresql://..." APP_MASTER_KEY="$(openssl rand -hex 32)" npm run db:seed
 ```
 
-The seed prints a **dev-only** webhook plaintext (`whsec_dev_demo_change_me`) for later simulator / CP04 work.
+The seed prints a **dev-only** webhook plaintext (`whsec_dev_demo_change_me`) for later simulator / CP04 work. Demo users get an Argon2 password hash; default password is **`demo`** (override with `DEMO_SEED_PASSWORD` in `.env`).
+
+### Auth (CP02)
+
+After migrate + seed, sign in with the cookie session API:
+
+```bash
+# login (sets HttpOnly beacon_session cookie in -c jar)
+curl -s -c /tmp/beacon.cookies -b /tmp/beacon.cookies -X POST http://localhost:3001/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"owner@demo.invalid","password":"demo"}'
+
+curl -s -b /tmp/beacon.cookies http://localhost:3001/v1/auth/me
+curl -s -b /tmp/beacon.cookies http://localhost:3001/v1/orgs/demo/me
+curl -s -b /tmp/beacon.cookies http://localhost:3001/v1/orgs/demo/services
+```
+
+Org routes return **403** if the signed-in user has no membership for that org slug.
 
 Schema + migrations live under [`packages/db/`](packages/db/).
 
@@ -59,6 +76,7 @@ Schema + migrations live under [`packages/db/`](packages/db/).
 | `npm run dev` | API + web in parallel |
 | `npm run build` | Production build (web then api) |
 | `npm run typecheck` | `tsc` in all workspaces |
+| `npm test` | Vitest in workspaces that define `test` |
 | `npm run db:generate` | Drizzle SQL from schema |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Insert demo org/service/policy (requires `APP_MASTER_KEY`) |
