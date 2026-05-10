@@ -12,6 +12,7 @@
     "lint": "echo \"(no eslint in @beacon/api yet)\""
   },
   "dependencies": {
+    "@beacon/ai": "0.0.0",
     "@beacon/db": "0.0.0",
     "@hono/node-server": "^1.14.1",
     "argon2": "^0.41.1",

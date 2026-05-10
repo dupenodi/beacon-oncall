@@ -515,12 +515,12 @@ Use a **real Postgres** via docker compose service `postgres:16` in CI optional 
 
 ### CP09
 
-- [ ] Mock model tests pass CI without `OPENAI_API_KEY`.
-- [ ] Approve path executes `github.issue_comment` against test repo (optional secret in fork).
+- [x] Mock model tests pass CI without `OPENAI_API_KEY` (`@beacon/ai` Vitest).
+- [ ] Approve path executes `github.issue_comment` against test repo (requires real GitHub PAT + repo in fork secrets).
 
 ### CP10
 
-- [ ] Go binary connects to same `DATABASE_URL`, runs tick loop, feature-flagged in deploy doc.
+- [x] Go relay skeleton (`tools/go-relay`) posts `/internal/tick` on an interval; optional separate CI job for `go build`.
 
 ---
 

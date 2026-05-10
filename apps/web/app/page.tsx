@@ -35,6 +35,10 @@ export default async function Home() {
         <li>
           <a href="/orgs/demo/incidents">Operator incidents list (session cookie)</a>
         </li>
+        <li>
+          Action agent UI: <code>{`/orgs/demo/incidents/<incidentId>/agent`}</code> — create an incident, then open
+          this path with its id.
+        </li>
       </ul>
     </main>
   );

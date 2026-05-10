@@ -3,6 +3,11 @@ import { z } from "zod";
 import { getDb } from "../lib/db";
 import { requireOrgMembership } from "../middleware/require-org";
 import {
+  approveAndExecuteGithubComment,
+  createActionRunForIncident,
+  getActionRunWithSteps,
+} from "../services/action-runs";
+import {
   ackIncident,
   getIncidentForOrg,
   listIncidentEventsForOrg,
@@ -83,6 +88,81 @@ incidentRoutes.get("/:incidentId/events", async (c) => {
   }
 
   return c.json({ events });
+});
+
+incidentRoutes.post("/:incidentId/action-runs", async (c) => {
+  const org = c.get("org");
+  const user = c.get("user");
+  if (!user) {
+    return c.json({ error: { code: "unauthorized", message: "Sign in required" } }, 401);
+  }
+
+  const incidentId = c.req.param("incidentId");
+  if (!z.string().uuid().safeParse(incidentId).success) {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+
+  const { db } = getDb();
+  try {
+    const result = await createActionRunForIncident(db, {
+      orgId: org.id,
+      incidentId,
+      createdByUserId: user.id,
+    });
+    if (!result.ok) {
+      return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+    }
+    return c.json({ runId: result.runId }, 201);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "model_failed";
+    return c.json({ error: { code: "model_failed", message } }, 500);
+  }
+});
+
+incidentRoutes.get("/:incidentId/action-runs/:runId", async (c) => {
+  const org = c.get("org");
+  const incidentId = c.req.param("incidentId");
+  const runId = c.req.param("runId");
+  if (!z.string().uuid().safeParse(incidentId).success || !z.string().uuid().safeParse(runId).success) {
+    return c.json({ error: { code: "not_found", message: "Not found" } }, 404);
+  }
+
+  const { db } = getDb();
+  const detail = await getActionRunWithSteps(db, { orgId: org.id, incidentId, runId });
+  if (!detail) {
+    return c.json({ error: { code: "not_found", message: "Run not found" } }, 404);
+  }
+  return c.json(detail);
+});
+
+incidentRoutes.post("/:incidentId/action-runs/:runId/approve", async (c) => {
+  const org = c.get("org");
+  const user = c.get("user");
+  if (!user) {
+    return c.json({ error: { code: "unauthorized", message: "Sign in required" } }, 401);
+  }
+
+  const incidentId = c.req.param("incidentId");
+  const runId = c.req.param("runId");
+  if (!z.string().uuid().safeParse(incidentId).success || !z.string().uuid().safeParse(runId).success) {
+    return c.json({ error: { code: "not_found", message: "Not found" } }, 404);
+  }
+
+  const { db } = getDb();
+  const outcome = await approveAndExecuteGithubComment(db, { orgId: org.id, incidentId, runId });
+  if (!outcome.ok) {
+    if (outcome.code === "not_found") {
+      return c.json({ error: { code: "not_found", message: "Run not found" } }, 404);
+    }
+    if (outcome.code === "nothing_to_approve") {
+      return c.json({ error: { code: "invalid_state", message: "No pending approval step" } }, 409);
+    }
+    if (outcome.code === "github_not_configured") {
+      return c.json({ error: { code: "github_not_configured", message: outcome.message ?? "" } }, 400);
+    }
+    return c.json({ error: { code: "execute_failed", message: outcome.message ?? "GitHub API error" } }, 502);
+  }
+  return c.json({ ok: true, ...outcome.result });
 });
 
 incidentRoutes.get("/:incidentId", async (c) => {

@@ -7,6 +7,7 @@ import { getDb } from "../lib/db";
 import { loadSession, requireUser } from "../middleware/session";
 import { requireOrgMembership } from "../middleware/require-org";
 import { requireOwner } from "../middleware/require-owner";
+import { githubIntegrationRoutes } from "./github-integration";
 import { incidentRoutes } from "./incidents";
 import { policyRoutes } from "./policies";
 import { serviceRoutes } from "./services";
@@ -25,6 +26,7 @@ orgRoutes.get("/:orgSlug/me", requireOrgMembership, (c) => {
 orgRoutes.route("/:orgSlug/services", serviceRoutes);
 orgRoutes.route("/:orgSlug/policies", policyRoutes);
 orgRoutes.route("/:orgSlug/incidents", incidentRoutes);
+orgRoutes.route("/:orgSlug/integrations/github", githubIntegrationRoutes);
 
 orgRoutes.post("/:orgSlug/webhook-secret/rotate", requireOrgMembership, requireOwner, async (c) => {
   const org = c.get("org");

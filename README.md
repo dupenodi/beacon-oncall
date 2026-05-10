@@ -11,7 +11,9 @@ Private **incident routing / escalation** portfolio (multi-tenant API, timer-bas
 | [`apps/web`](apps/web) | Next.js (App Router) UI |
 | [`apps/api`](apps/api) | Hono HTTP API (`/health`, `/v1/*`, `/public/*`, `/internal/tick`) |
 | [`packages/db`](packages/db) | Drizzle schema + migrations |
+| [`packages/ai`](packages/ai) | `ChatModel` (`MockChatModel`, `OpenAiChatModel`) + GitHub comment helper |
 | [`tools/simulator`](tools/simulator) | `beacon-sim` CLI — signed webhook traffic (`steady` / `burst`) |
+| [`tools/go-relay`](tools/go-relay) | Optional CP10 Go poller for `/internal/tick` |
 
 ## Prerequisites
 
@@ -115,6 +117,17 @@ Scheduled workflows (no-op until secrets exist): [`.github/workflows/tick.yml`](
 
 - API: `GET /public/:orgSlug/status` (no session).
 - Web: server-rendered page at `/public/[orgSlug]/status`.
+
+### Action agent (CP09)
+
+- **Model:** `@beacon/ai` — `createChatModel()` uses `OpenAiChatModel` when `OPENAI_API_KEY` is set, else `MockChatModel` (CI-safe).
+- **GitHub integration (owner):** `GET/PUT /v1/orgs/:orgSlug/integrations/github` — body `{ "pat": "ghp_...", "defaultRepo": "owner/repo" }`; PAT encrypted with `APP_MASTER_KEY` like other secrets.
+- **Runs:** `POST /v1/orgs/:orgSlug/incidents/:incidentId/action-runs` → `{ runId }`; `GET .../action-runs/:runId`; `POST .../action-runs/:runId/approve` executes `github.issue_comment` when a pending tool step exists.
+- **Web:** `/orgs/[orgSlug]/incidents/[incidentId]/agent` — minimal create / load / approve buttons (session cookie to API).
+
+### Go relay (CP10, optional)
+
+See [`tools/go-relay/README.md`](tools/go-relay/README.md). Build with Go 1.22+; not part of `npm run build`.
 
 ## Scripts
 
