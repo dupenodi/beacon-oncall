@@ -8,7 +8,11 @@ import { orgRoutes } from "./routes/orgs.js";
 import { publicRoutes } from "./routes/public.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 
-const allowedOrigins = ["http://localhost:3000", "http://127.0.0.1:3000"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim()) : []),
+];
 
 export function createApp() {
   const app = new Hono();
