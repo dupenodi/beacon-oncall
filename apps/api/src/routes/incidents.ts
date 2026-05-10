@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { getDb } from "../lib/db";
-import { requireOrgMembership } from "../middleware/require-org";
+import { getDb } from "../lib/db.js";
+import { requireOrgMembership } from "../middleware/require-org.js";
 import {
   approveAndExecuteGithubComment,
   createActionRunForIncident,
   getActionRunWithSteps,
-} from "../services/action-runs";
+} from "../services/action-runs.js";
 import {
   ackIncident,
   getIncidentForOrg,
@@ -14,8 +14,8 @@ import {
   listIncidentsForOrg,
   openIncidentManual,
   resolveIncident,
-} from "../services/incidents";
-import { createNotifier } from "../services/notify";
+} from "../services/incidents.js";
+import { createNotifier } from "../services/notify.js";
 
 const manualCreateIncidentSchema = z.object({
   serviceId: z.string().uuid(),

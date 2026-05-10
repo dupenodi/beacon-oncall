@@ -9,8 +9,8 @@ import argon2 from "argon2";
 import { config as loadEnv } from "dotenv";
 import { and, eq } from "drizzle-orm";
 import { resolve } from "node:path";
-import { createDb } from "./index";
-import { encryptAes256Gcm, parseMasterKeyFromEnv } from "./crypto";
+import { createDb } from "./index.js";
+import { encryptAes256Gcm, parseMasterKeyFromEnv } from "./crypto.js";
 import {
   escalationPolicies,
   escalationSteps,
@@ -19,7 +19,7 @@ import {
   servicePolicyBindings,
   services,
   users,
-} from "./schema";
+} from "./schema.js";
 
 loadEnv({ path: resolve(process.cwd(), "../../.env") });
 

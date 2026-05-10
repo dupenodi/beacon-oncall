@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import * as schema from "./schema";
+import * as schema from "./schema.js";
 
 export type BeaconDb = PostgresJsDatabase<typeof schema>;
 
@@ -11,5 +11,5 @@ export function createDb(databaseUrl: string): { db: BeaconDb; client: ReturnTyp
   return { db, client };
 }
 
-export * from "./schema";
-export * from "./crypto";
+export * from "./schema.js";
+export * from "./crypto.js";

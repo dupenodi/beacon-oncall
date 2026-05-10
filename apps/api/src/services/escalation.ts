@@ -6,8 +6,8 @@ import {
   incidents,
   servicePolicyBindings,
 } from "@beacon/db/schema";
-import { notifyIncidentStep } from "./incidents";
-import type { Notifier } from "./notify";
+import { notifyIncidentStep } from "./incidents.js";
+import type { Notifier } from "./notify.js";
 
 /** Spec F — one transaction: lock due rows, then process each. */
 export async function processTickBatch(

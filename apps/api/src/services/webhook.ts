@@ -2,10 +2,10 @@ import { eq } from "drizzle-orm";
 import type { BeaconDb } from "@beacon/db";
 import { decryptAes256Gcm, parseMasterKeyFromEnv } from "@beacon/db";
 import { orgs } from "@beacon/db/schema";
-import { WebhookBodySchema } from "../schemas/webhook";
-import { findActiveIncidentByDedupe, openIncident } from "./incidents";
-import type { Notifier } from "./notify";
-import { verifyBeaconWebhookSignature } from "./webhook-verify";
+import { WebhookBodySchema } from "../schemas/webhook.js";
+import { findActiveIncidentByDedupe, openIncident } from "./incidents.js";
+import type { Notifier } from "./notify.js";
+import { verifyBeaconWebhookSignature } from "./webhook-verify.js";
 
 export type WebhookIngestError = { status: number; code: string; message: string };
 

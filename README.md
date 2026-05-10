@@ -193,7 +193,8 @@ This app is **two processes**: a **Next.js** site (`apps/web`) and a **long-runn
    - **Branch:** `main` (or your default branch)
    - **Root directory:** leave **empty** (repo root) so `npm` workspaces resolve.
    - **Runtime:** **Node**
-   - **Build command:** `npm ci && npm run build -w @beacon/api`
+   - **Build command:** `npm ci && npm run build -w @beacon/db -w @beacon/ai -w @beacon/api`  
+     (`@beacon/db` and `@beacon/ai` emit `dist/*.js` so Node can load them; the API build only compiles `apps/api`.)
    - **Start command:** `npm run start -w @beacon/api`
 5. Open **Environment** (left sidebar or tab) → **Add environment variable** for each production value from [`.env.example`](.env.example), at minimum:
    - `DATABASE_URL`, `APP_MASTER_KEY`, `INTERNAL_TICK_SECRET`, `NODE_ENV=production`

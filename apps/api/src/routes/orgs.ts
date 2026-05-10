@@ -3,14 +3,14 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { encryptAes256Gcm, parseMasterKeyFromEnv } from "@beacon/db";
 import { orgs } from "@beacon/db/schema";
-import { getDb } from "../lib/db";
-import { loadSession, requireUser } from "../middleware/session";
-import { requireOrgMembership } from "../middleware/require-org";
-import { requireOwner } from "../middleware/require-owner";
-import { githubIntegrationRoutes } from "./github-integration";
-import { incidentRoutes } from "./incidents";
-import { policyRoutes } from "./policies";
-import { serviceRoutes } from "./services";
+import { getDb } from "../lib/db.js";
+import { loadSession, requireUser } from "../middleware/session.js";
+import { requireOrgMembership } from "../middleware/require-org.js";
+import { requireOwner } from "../middleware/require-owner.js";
+import { githubIntegrationRoutes } from "./github-integration.js";
+import { incidentRoutes } from "./incidents.js";
+import { policyRoutes } from "./policies.js";
+import { serviceRoutes } from "./services.js";
 
 export const orgRoutes = new Hono();
 

@@ -2,8 +2,8 @@ import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { escalationPolicies, servicePolicyBindings, services } from "@beacon/db/schema";
-import { getDb } from "../lib/db";
-import { requireOrgMembership } from "../middleware/require-org";
+import { getDb } from "../lib/db.js";
+import { requireOrgMembership } from "../middleware/require-org.js";
 
 const createServiceSchema = z.object({
   name: z.string().min(1).max(200),

@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run -c vitest.integration.config.ts",
+    "test:integration": "npm run build -w @beacon/db -w @beacon/ai --prefix ../.. && vitest run -c vitest.integration.config.ts",
     "lint": "echo \"(no eslint in @beacon/api yet)\""
   },
   "dependencies": {

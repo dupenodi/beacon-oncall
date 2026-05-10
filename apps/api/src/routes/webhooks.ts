@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { getDb } from "../lib/db";
-import { createNotifier } from "../services/notify";
-import { ingestSignedWebhook } from "../services/webhook";
+import { getDb } from "../lib/db.js";
+import { createNotifier } from "../services/notify.js";
+import { ingestSignedWebhook } from "../services/webhook.js";
 
 export const webhookRoutes = new Hono();
 

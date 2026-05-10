@@ -2,8 +2,8 @@ import { and, asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { escalationPolicies, escalationSteps, memberships } from "@beacon/db/schema";
-import { getDb } from "../lib/db";
-import { requireOrgMembership } from "../middleware/require-org";
+import { getDb } from "../lib/db.js";
+import { requireOrgMembership } from "../middleware/require-org.js";
 
 const stepSchema = z.object({
   waitSeconds: z.number().int().min(0),

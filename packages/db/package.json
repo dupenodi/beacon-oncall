@@ -5,15 +5,16 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./schema": {
-      "types": "./src/schema.ts",
-      "default": "./src/schema.ts"
+      "types": "./dist/schema.d.ts",
+      "default": "./dist/schema.js"
     }
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo \"(no eslint in @beacon/db yet)\"",
     "generate": "drizzle-kit generate",
@@ -25,11 +26,11 @@
     "argon2": "^0.41.1",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.41.0",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "typescript": "^5.8.2"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.0",
-    "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "tsx": "^4.19.3"
   }
 }

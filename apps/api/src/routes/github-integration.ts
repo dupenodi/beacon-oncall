@@ -3,9 +3,9 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { encryptAes256Gcm, parseMasterKeyFromEnv } from "@beacon/db";
 import { integrationsGithub } from "@beacon/db/schema";
-import { getDb } from "../lib/db";
-import { requireOrgMembership } from "../middleware/require-org";
-import { requireOwner } from "../middleware/require-owner";
+import { getDb } from "../lib/db.js";
+import { requireOrgMembership } from "../middleware/require-org.js";
+import { requireOwner } from "../middleware/require-owner.js";
 
 const putBody = z.object({
   pat: z.string().min(1).max(5000),

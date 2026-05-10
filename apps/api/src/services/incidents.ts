@@ -10,7 +10,7 @@ import {
   services,
   users,
 } from "@beacon/db/schema";
-import type { Notifier } from "./notify";
+import type { Notifier } from "./notify.js";
 
 export type IncidentStatus = "open" | "acknowledged" | "resolved";
 export type Severity = "SEV1" | "SEV2" | "SEV3" | "SEV4";

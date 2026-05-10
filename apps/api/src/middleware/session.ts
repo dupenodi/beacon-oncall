@@ -2,9 +2,9 @@ import { and, eq, gt, sql } from "drizzle-orm";
 import type { MiddlewareHandler } from "hono";
 import { getCookie } from "hono/cookie";
 import { sessions, users } from "@beacon/db/schema";
-import { SESSION_COOKIE_NAME } from "../constants";
-import { getDb } from "../lib/db";
-import { hashSessionToken } from "../lib/session-token";
+import { SESSION_COOKIE_NAME } from "../constants.js";
+import { getDb } from "../lib/db.js";
+import { hashSessionToken } from "../lib/session-token.js";
 
 export type AuthedUser = { id: string; email: string };
 

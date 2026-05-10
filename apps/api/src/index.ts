@@ -1,6 +1,6 @@
-import "./env";
+import "./env.js";
 import { serve } from "@hono/node-server";
-import { createApp } from "./app";
+import { createApp } from "./app.js";
 
 const app = createApp();
 /** Render/Fly/etc. set `PORT`; local dev often uses `API_PORT` (see `.env.example`). */

@@ -1,12 +1,12 @@
 import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { getDb } from "./lib/db";
-import { authRoutes } from "./routes/auth";
-import { internalRoutes } from "./routes/internal";
-import { orgRoutes } from "./routes/orgs";
-import { publicRoutes } from "./routes/public";
-import { webhookRoutes } from "./routes/webhooks";
+import { getDb } from "./lib/db.js";
+import { authRoutes } from "./routes/auth.js";
+import { internalRoutes } from "./routes/internal.js";
+import { orgRoutes } from "./routes/orgs.js";
+import { publicRoutes } from "./routes/public.js";
+import { webhookRoutes } from "./routes/webhooks.js";
 
 const allowedOrigins = ["http://localhost:3000", "http://127.0.0.1:3000"];
 

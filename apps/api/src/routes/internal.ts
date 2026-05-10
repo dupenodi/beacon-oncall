@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import { Hono } from "hono";
-import { getDb } from "../lib/db";
-import { processTickBatch } from "../services/escalation";
-import { createNotifier } from "../services/notify";
+import { getDb } from "../lib/db.js";
+import { processTickBatch } from "../services/escalation.js";
+import { createNotifier } from "../services/notify.js";
 
 function timingSafeAuth(provided: string, expected: string): boolean {
   const a = Buffer.from(provided, "utf8");

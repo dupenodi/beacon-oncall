@@ -3,10 +3,10 @@ import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
 import { sessions, users } from "@beacon/db/schema";
-import { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } from "../constants";
-import { getDb } from "../lib/db";
-import { hashSessionToken, randomSessionToken } from "../lib/session-token";
-import { loadSession, requireUser } from "../middleware/session";
+import { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } from "../constants.js";
+import { getDb } from "../lib/db.js";
+import { hashSessionToken, randomSessionToken } from "../lib/session-token.js";
+import { loadSession, requireUser } from "../middleware/session.js";
 import argon2 from "argon2";
 
 const loginSchema = z.object({

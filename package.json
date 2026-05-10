@@ -11,12 +11,12 @@
   },
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,magenta \"npm run dev -w @beacon/api\" \"npm run dev -w @beacon/web\"",
-    "build": "npm run build -w @beacon/web && npm run build -w @beacon/api",
+    "build": "npm run build -w @beacon/db -w @beacon/ai && npm run build -w @beacon/web && npm run build -w @beacon/api",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:integration": "npm run test:integration -w @beacon/api",
-    "verify": "npm run typecheck && npm test && npm run build",
+    "verify": "npm run build -w @beacon/db -w @beacon/ai && npm run typecheck && npm test && npm run build -w @beacon/web && npm run build -w @beacon/api",
     "db:generate": "npm run generate -w @beacon/db",
     "db:migrate": "npm run migrate -w @beacon/db",
     "db:seed": "npm run seed -w @beacon/db"

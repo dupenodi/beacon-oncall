@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import type { MiddlewareHandler } from "hono";
 import { memberships, orgs } from "@beacon/db/schema";
-import { getDb } from "../lib/db";
+import { getDb } from "../lib/db.js";
 
 export type OrgContext = {
   id: string;
