@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { API_BASE } from "@/lib/api";
 
+/** Matches `packages/db` seed defaults (`DEMO_SEED_PASSWORD` overrides password). */
+const DEMO = {
+  orgSlug: "demo",
+  password: "demo",
+  ownerEmail: "owner@demo.invalid",
+  oncallEmail: "oncall@demo.invalid",
+} as const;
+
 function BeaconIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -60,6 +68,43 @@ export default function LoginPage() {
             <div className="login-heading">Beacon</div>
             <div className="login-sub">On-call alerting, escalation, and incident response</div>
           </div>
+        </div>
+
+        <div className="login-demo">
+          <div className="login-demo-title">Seeded demo</div>
+          <p className="login-demo-note">
+            Works after <span className="text-muted">db:seed</span> (local or hosted). Org{" "}
+            <strong className="text-muted">{DEMO.orgSlug}</strong>, password{" "}
+            <strong className="text-muted">{DEMO.password}</strong> unless the deploy set{" "}
+            <span className="text-muted">DEMO_SEED_PASSWORD</span>.
+          </p>
+          <div className="login-demo-row">
+            <button
+              type="button"
+              className="login-demo-pill"
+              onClick={() => {
+                setEmail(DEMO.ownerEmail);
+                setPassword(DEMO.password);
+                setOrgSlug(DEMO.orgSlug);
+              }}
+            >
+              Owner (admin)
+            </button>
+            <button
+              type="button"
+              className="login-demo-pill"
+              onClick={() => {
+                setEmail(DEMO.oncallEmail);
+                setPassword(DEMO.password);
+                setOrgSlug(DEMO.orgSlug);
+              }}
+            >
+              On-call (member)
+            </button>
+          </div>
+          <p className="login-demo-meta">
+            {DEMO.ownerEmail} · {DEMO.oncallEmail}
+          </p>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
