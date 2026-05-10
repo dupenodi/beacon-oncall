@@ -13,11 +13,12 @@
   },
   "dependencies": {
     "@beacon/db": "0.0.0",
+    "@hono/node-server": "^1.14.1",
     "argon2": "^0.41.1",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.41.0",
-    "@hono/node-server": "^1.14.1",
     "hono": "^4.7.6",
+    "resend": "^6.12.3",
     "zod": "^3.24.4"
   },
   "devDependencies": {

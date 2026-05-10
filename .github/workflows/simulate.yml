@@ -1,0 +1,33 @@
+name: simulate
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  steady:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: beacon-sim steady
+        env:
+          SIM_BASE_URL: ${{ secrets.SIM_BASE_URL }}
+          SIM_ORG_SLUG: ${{ secrets.SIM_ORG_SLUG }}
+          SIM_SERVICE_ID: ${{ secrets.SIM_SERVICE_ID }}
+          SIM_WEBHOOK_SECRET: ${{ secrets.SIM_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$SIM_BASE_URL" ] || [ -z "$SIM_ORG_SLUG" ] || [ -z "$SIM_SERVICE_ID" ] || [ -z "$SIM_WEBHOOK_SECRET" ]; then
+            echo "Skip: set SIM_* secrets to enable simulator cron."
+            exit 0
+          fi
+          npm run start -w @beacon/simulator -- steady \
+            --baseUrl "$SIM_BASE_URL" \
+            --orgSlug "$SIM_ORG_SLUG" \
+            --serviceId "$SIM_SERVICE_ID" \
+            --secret "$SIM_WEBHOOK_SECRET"

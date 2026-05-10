@@ -10,7 +10,7 @@ import {
   openIncidentManual,
   resolveIncident,
 } from "../services/incidents";
-import { createConsoleNotifier } from "../services/notify";
+import { createNotifier } from "../services/notify";
 
 const manualCreateIncidentSchema = z.object({
   serviceId: z.string().uuid(),
@@ -37,7 +37,7 @@ incidentRoutes.post("/", async (c) => {
   }
 
   const { db } = getDb();
-  const notifier = createConsoleNotifier();
+  const notifier = createNotifier();
   const result = await openIncidentManual(db, notifier, {
     orgId: org.id,
     serviceId: parsed.data.serviceId,

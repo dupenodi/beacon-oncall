@@ -28,6 +28,14 @@ export default async function Home() {
       <p style={{ color: "#666", fontSize: 14 }}>
         Set <code>NEXT_PUBLIC_API_URL</code> if the API is not on <code>http://localhost:3001</code>.
       </p>
+      <ul style={{ lineHeight: 1.8 }}>
+        <li>
+          <a href="/public/demo/status">Public status (org slug: demo)</a>
+        </li>
+        <li>
+          <a href="/orgs/demo/incidents">Operator incidents list (session cookie)</a>
+        </li>
+      </ul>
     </main>
   );
 }

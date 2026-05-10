@@ -9,8 +9,9 @@ Private **incident routing / escalation** portfolio (multi-tenant API, timer-bas
 | Path | Purpose |
 |------|---------|
 | [`apps/web`](apps/web) | Next.js (App Router) UI |
-| [`apps/api`](apps/api) | Hono HTTP API (`/health`, `/v1/auth/*`, `/v1/orgs/*`) |
+| [`apps/api`](apps/api) | Hono HTTP API (`/health`, `/v1/*`, `/public/*`, `/internal/tick`) |
 | [`packages/db`](packages/db) | Drizzle schema + migrations |
+| [`tools/simulator`](tools/simulator) | `beacon-sim` CLI — signed webhook traffic (`steady` / `burst`) |
 
 ## Prerequisites
 
@@ -22,13 +23,13 @@ Private **incident routing / escalation** portfolio (multi-tenant API, timer-bas
 ```bash
 cd beacon-oncall
 cp .env.example .env
-# edit .env — set DATABASE_URL, APP_MASTER_KEY (see .env.example)
+# edit .env — set DATABASE_URL, APP_MASTER_KEY, INTERNAL_TICK_SECRET (tick), optional RESEND_* (see .env.example)
 
 npm install
 npm run dev
 ```
 
-- **Web:** [http://localhost:3000](http://localhost:3000) (home page calls API `/health`)
+- **Web:** [http://localhost:3000](http://localhost:3000) — home, [`/public/demo/status`](http://localhost:3000/public/demo/status), [`/orgs/demo/incidents`](http://localhost:3000/orgs/demo/incidents)
 - **API:** [http://localhost:3001/health](http://localhost:3001/health)
 
 Stop dev: `Ctrl+C` (concurrently kills both).
@@ -90,6 +91,31 @@ curl -s -b /tmp/beacon.cookies -X POST http://localhost:3001/v1/orgs/demo/incide
 
 Schema + migrations live under [`packages/db/`](packages/db/).
 
+### Webhook ingest (CP04)
+
+`POST /v1/webhooks/:orgSlug/ingest` with **raw JSON body** (same bytes used for the MAC). Headers: `X-Beacon-Timestamp` (unix seconds), `X-Beacon-Signature` (`v1=<lowercase-hex>`). Secret is the org plaintext from seed or `POST /v1/orgs/:orgSlug/webhook-secret/rotate` (owner only).
+
+### Services, policies, bind (CP05)
+
+Authenticated under `/v1/orgs/:orgSlug/`: `POST|GET /services`, `PATCH /services/:id`, `POST|GET /policies`, `POST /services/:id/policy` (body `{ policyId }`).
+
+### Escalation tick (CP06)
+
+`POST /internal/tick` with header `X-Internal-Auth: $INTERNAL_TICK_SECRET` (min 32 characters). Returns `{ processed, advanced, errors }`.
+
+### Email (CP07)
+
+When `RESEND_API_KEY` and `EMAIL_FROM` are set, notifications use [Resend](https://resend.com); otherwise the API uses a no-op console notifier (fine for local dev).
+
+Scheduled workflows (no-op until secrets exist): [`.github/workflows/tick.yml`](.github/workflows/tick.yml), [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml).
+
+**Simulator:** `npm run start -w @beacon/simulator -- steady --baseUrl http://localhost:3001 --orgSlug demo --serviceId <uuid> --secret <plaintext>` (use `burst` with `--count N` for sequential bursts).
+
+### Public status (CP08)
+
+- API: `GET /public/:orgSlug/status` (no session).
+- Web: server-rendered page at `/public/[orgSlug]/status`.
+
 ## Scripts
 
 | Command | Description |
@@ -101,10 +127,11 @@ Schema + migrations live under [`packages/db/`](packages/db/).
 | `npm run db:generate` | Drizzle SQL from schema |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Insert demo org/service/policy (requires `APP_MASTER_KEY`) |
+| `npm run start -w @beacon/simulator -- …` | Run simulator CLI (see CP07; args after `--`) |
 
 ## CI
 
-GitHub Actions runs `npm ci` and `npm run typecheck` on pushes/PRs to `main` (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+GitHub Actions runs `npm ci`, `npm run typecheck`, and `npm test` on pushes/PRs to `main` (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## GitHub repo bootstrap (one-time)
 

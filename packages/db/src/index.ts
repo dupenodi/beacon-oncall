@@ -12,3 +12,4 @@ export function createDb(databaseUrl: string): { db: BeaconDb; client: ReturnTyp
 }
 
 export * from "./schema";
+export * from "./crypto";

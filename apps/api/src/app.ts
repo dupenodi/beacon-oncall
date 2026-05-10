@@ -3,7 +3,10 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { getDb } from "./lib/db";
 import { authRoutes } from "./routes/auth";
+import { internalRoutes } from "./routes/internal";
 import { orgRoutes } from "./routes/orgs";
+import { publicRoutes } from "./routes/public";
+import { webhookRoutes } from "./routes/webhooks";
 
 const allowedOrigins = ["http://localhost:3000", "http://127.0.0.1:3000"];
 
@@ -17,8 +20,14 @@ export function createApp() {
         if (!origin) return allowedOrigins[0];
         return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
       },
-      allowMethods: ["GET", "POST", "OPTIONS"],
-      allowHeaders: ["Content-Type", "Cookie"],
+      allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
+      allowHeaders: [
+        "Content-Type",
+        "Cookie",
+        "X-Beacon-Timestamp",
+        "X-Beacon-Signature",
+        "X-Internal-Auth",
+      ],
       credentials: true,
     }),
   );
@@ -45,9 +54,13 @@ export function createApp() {
     }
   });
 
+  app.route("/public", publicRoutes);
+  app.route("/internal", internalRoutes);
+
   const v1 = new Hono();
   v1.route("/auth", authRoutes);
   v1.route("/orgs", orgRoutes);
+  v1.route("/webhooks", webhookRoutes);
   app.route("/v1", v1);
 
   return app;

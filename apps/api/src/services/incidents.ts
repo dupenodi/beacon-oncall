@@ -1,10 +1,11 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import type { BeaconDb } from "@beacon/db";
 import {
   escalationSteps,
   incidentEvents,
   incidents,
   notificationAttempts,
+  orgs,
   servicePolicyBindings,
   services,
   users,
@@ -22,7 +23,35 @@ export type OpenManualInput = {
   openedByUserId: string;
 };
 
+export type OpenIncidentSource = "manual" | "webhook";
+
+export type OpenIncidentInput = {
+  orgId: string;
+  serviceId: string;
+  title: string;
+  severity?: Severity;
+  source: OpenIncidentSource;
+  dedupeKey?: string | null;
+  externalRef?: string | null;
+  openedByUserId?: string | null;
+};
+
 export type OpenManualError = { code: "service_not_found" | "policy_missing" };
+
+export async function findActiveIncidentByDedupe(db: BeaconDb, orgId: string, dedupeKey: string) {
+  const rows = await db
+    .select({ id: incidents.id })
+    .from(incidents)
+    .where(
+      and(
+        eq(incidents.orgId, orgId),
+        eq(incidents.dedupeKey, dedupeKey),
+        inArray(incidents.status, ["open", "acknowledged"]),
+      ),
+    )
+    .limit(1);
+  return rows[0]?.id ?? null;
+}
 
 const NOTIFY_ERR_MAX = 500;
 
@@ -41,11 +70,13 @@ export async function notifyIncidentStep(
     .select({
       id: incidents.id,
       orgId: incidents.orgId,
+      orgSlug: orgs.slug,
       serviceId: incidents.serviceId,
       title: incidents.title,
       severity: incidents.severity,
     })
     .from(incidents)
+    .innerJoin(orgs, eq(incidents.orgId, orgs.id))
     .where(eq(incidents.id, incidentId))
     .limit(1);
 
@@ -77,8 +108,9 @@ export async function notifyIncidentStep(
 
   if (!user?.email) return;
 
+  const origin = process.env.PUBLIC_WEB_ORIGIN ?? "http://localhost:3000";
   const subject = `[${inc.severity}] ${inc.title}`;
-  const text = `Incident: ${inc.id}`;
+  const text = `Incident: ${inc.id}\n${origin}/orgs/${inc.orgSlug}/incidents/${inc.id}`;
 
   await db
     .insert(notificationAttempts)
@@ -132,11 +164,11 @@ export async function notifyIncidentStep(
   }
 }
 
-/** Spec A — manual `source: api`; notify failures do not roll back the incident. */
-export async function openIncidentManual(
+/** Spec A — notify failures do not roll back the incident row + `incident.opened` event. */
+export async function openIncident(
   db: BeaconDb,
   notifier: Notifier,
-  input: OpenManualInput,
+  input: OpenIncidentInput,
 ): Promise<{ ok: true; incidentId: string } | { ok: false; error: OpenManualError }> {
   const [svc] = await db
     .select({
@@ -178,6 +210,7 @@ export async function openIncidentManual(
     return { ok: false, error: { code: "policy_missing" } };
   }
   const severity = input.severity ?? svc.severity;
+  const dedupeKey = input.dedupeKey?.trim() ? input.dedupeKey.trim() : null;
 
   const incidentId = await db.transaction(async (tx) => {
     const [row] = await tx
@@ -188,9 +221,11 @@ export async function openIncidentManual(
         status: "open",
         severity,
         title: input.title,
+        dedupeKey,
         currentStepIndex: 0,
         nextActionAt: null,
-        openedByUserId: input.openedByUserId,
+        openedByUserId: input.openedByUserId ?? null,
+        externalRef: input.externalRef?.trim() ? input.externalRef.trim() : null,
       })
       .returning({ id: incidents.id });
 
@@ -200,8 +235,12 @@ export async function openIncidentManual(
       incidentId: row.id,
       orgId: input.orgId,
       type: "incident.opened",
-      payload: { source: "manual", dedupeKey: null },
-      actorUserId: input.openedByUserId,
+      payload: {
+        source: input.source,
+        dedupeKey,
+        externalRef: input.externalRef?.trim() ? input.externalRef.trim() : null,
+      },
+      actorUserId: input.openedByUserId ?? null,
     });
 
     return row.id;
@@ -218,6 +257,23 @@ export async function openIncidentManual(
   await db.update(incidents).set({ nextActionAt }).where(eq(incidents.id, incidentId));
 
   return { ok: true, incidentId };
+}
+
+export async function openIncidentManual(
+  db: BeaconDb,
+  notifier: Notifier,
+  input: OpenManualInput,
+): Promise<{ ok: true; incidentId: string } | { ok: false; error: OpenManualError }> {
+  return openIncident(db, notifier, {
+    orgId: input.orgId,
+    serviceId: input.serviceId,
+    title: input.title,
+    severity: input.severity,
+    source: "manual",
+    dedupeKey: null,
+    externalRef: null,
+    openedByUserId: input.openedByUserId,
+  });
 }
 
 /** Spec D */

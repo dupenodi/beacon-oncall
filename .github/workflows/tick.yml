@@ -1,0 +1,22 @@
+name: tick
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /internal/tick
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          INTERNAL_TICK_SECRET: ${{ secrets.INTERNAL_TICK_SECRET }}
+        run: |
+          if [ -z "$API_BASE_URL" ] || [ -z "$INTERNAL_TICK_SECRET" ]; then
+            echo "Skip: set API_BASE_URL and INTERNAL_TICK_SECRET in repo secrets to enable."
+            exit 0
+          fi
+          curl -fsS -X POST "$API_BASE_URL/internal/tick" \
+            -H "X-Internal-Auth: $INTERNAL_TICK_SECRET"
