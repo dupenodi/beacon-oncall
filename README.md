@@ -137,6 +137,7 @@ See [`tools/go-relay/README.md`](tools/go-relay/README.md). Build with Go 1.22+;
 | `npm run build` | Production build (web then api) |
 | `npm run typecheck` | `tsc` in all workspaces |
 | `npm test` | Vitest in workspaces that define `test` |
+| `npm run verify` | `typecheck` + `test` + `build` (local gate before push) |
 | `npm run db:generate` | Drizzle SQL from schema |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Insert demo org/service/policy (requires `APP_MASTER_KEY`) |
@@ -144,7 +145,7 @@ See [`tools/go-relay/README.md`](tools/go-relay/README.md). Build with Go 1.22+;
 
 ## CI
 
-GitHub Actions runs `npm ci`, `npm run typecheck`, and `npm test` on pushes/PRs to `main` (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+GitHub Actions runs `npm ci` and `npm run verify` on pushes/PRs to `main` (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## GitHub repo bootstrap (one-time)
 

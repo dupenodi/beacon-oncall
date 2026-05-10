@@ -15,11 +15,11 @@
 
 ## CP00 snapshot (already in repo)
 
-- Root [package.json](package.json): workspaces `apps/*`, `packages/*`; scripts `dev`, `build`, `typecheck`, `db:generate`, `db:migrate`.
+- Root [package.json](package.json): workspaces `apps/*`, `packages/*`, `tools/simulator`; scripts `dev`, `build`, `verify`, `typecheck`, `test`, `db:generate`, `db:migrate`.
 - [apps/api](apps/api): Hono + `@hono/node-server`; `GET /health`, `GET /health/db`.
 - [apps/web](apps/web): Next.js App Router; home page fetches `NEXT_PUBLIC_API_URL + /health`.
 - [packages/db](packages/db): Drizzle + `postgres` driver; `createDb(url)` in [packages/db/src/index.ts](packages/db/src/index.ts); **CP01** baseline migration + full schema in `packages/db/drizzle/` (see repo README for migrate + seed).
-- CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) runs `npm ci` + `npm run typecheck`.
+- CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) runs `npm ci` + `npm run verify` (`typecheck`, `test`, `build`).
 
 **CP01 (landed in repo):** baseline migration `0000_faulty_firelord.sql` creates the full schema. If an older dev DB still has `beacon_meta`, drop it or reset the database before migrating.
 
@@ -82,7 +82,9 @@
 | `apps/web/app/(app)/**` | CP08 | Authenticated UI routes (layout checks session). |
 | `apps/web/app/public/**` or `app/o/[orgSlug]/status` | CP08 | Public status view calling API read-only endpoint. |
 | `tools/simulator/src/index.ts` | CP07 | CLI entry. |
-| `packages/ai/**` | CP09 | Model interface + implementations. |
+| `packages/ai/**` | CP09 | Model interface + implementations (`MockChatModel`, `OpenAiChatModel`, `postGithubIssueComment`). |
+| `apps/api/src/services/action-runs.ts` | CP09 | Create / load / approve action runs + GitHub tool execution. |
+| `tools/go-relay/**` | CP10 (optional) | Go binary polling `POST /internal/tick`. |
 | `.github/workflows/tick.yml` | CP07 | Cron POST `/internal/tick`. |
 | `.github/workflows/simulate.yml` | CP07 | Cron run simulator `steady`. |
 
@@ -542,7 +544,7 @@ Use a **real Postgres** via docker compose service `postgres:16` in CI optional 
 
 ---
 
-## Optional packages (CP09)
+## Optional packages (CP09) — **landed** in-repo
 
 `packages/ai` exports:
 
