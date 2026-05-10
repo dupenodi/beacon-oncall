@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { API_BASE } from "@/lib/api";
 
-/** Matches `packages/db` seed defaults (`DEMO_SEED_PASSWORD` overrides password). */
+/** Sample accounts from the default database seed (password can differ if the host set `DEMO_SEED_PASSWORD`). */
 const DEMO = {
   orgSlug: "demo",
   password: "demo",
@@ -66,17 +66,20 @@ export default function LoginPage() {
           </div>
           <div>
             <div className="login-heading">Beacon</div>
-            <div className="login-sub">On-call alerting, escalation, and incident response</div>
+            <div className="login-sub">Stay on top of incidents and escalations</div>
           </div>
         </div>
 
         <div className="login-demo">
-          <div className="login-demo-title">Seeded demo</div>
+          <div className="login-demo-kicker">
+            <span className="login-demo-badge">Demo</span>
+            <span className="login-demo-kicker-text">Sample data, not a real customer</span>
+          </div>
+          <div className="login-demo-title">Try the sample workspace</div>
           <p className="login-demo-note">
-            Works after <span className="text-muted">db:seed</span> (local or hosted). Org{" "}
-            <strong className="text-muted">{DEMO.orgSlug}</strong>, password{" "}
-            <strong className="text-muted">{DEMO.password}</strong> unless the deploy set{" "}
-            <span className="text-muted">DEMO_SEED_PASSWORD</span>.
+            Example people and incidents are included so you can look around. Pick a role below and
+            email and password fill in automatically. Password is <strong className="text-muted">{DEMO.password}</strong>{" "}
+            for both; workspace name is <strong className="text-muted">{DEMO.orgSlug}</strong>.
           </p>
           <div className="login-demo-row">
             <button
@@ -88,7 +91,7 @@ export default function LoginPage() {
                 setOrgSlug(DEMO.orgSlug);
               }}
             >
-              Owner (admin)
+              I’m the workspace owner
             </button>
             <button
               type="button"
@@ -99,11 +102,12 @@ export default function LoginPage() {
                 setOrgSlug(DEMO.orgSlug);
               }}
             >
-              On-call (member)
+              I’m on-call (teammate)
             </button>
           </div>
           <p className="login-demo-meta">
-            {DEMO.ownerEmail} · {DEMO.oncallEmail}
+            If these do not work, this environment may use a custom password—try the one your host
+            shared, or sign in with credentials from your team.
           </p>
         </div>
 
@@ -151,8 +155,9 @@ export default function LoginPage() {
               spellCheck={false}
             />
             <div className="text-xs text-muted" style={{ marginTop: 6, lineHeight: 1.5 }}>
-              Same value as in your Beacon link after <span className="text-muted">/orgs/</span> — ask your admin if
-              you are unsure.
+              For the sample workspace, use <strong className="text-muted">{DEMO.orgSlug}</strong>. Otherwise it is
+              the short name in your invite link (the part after <span className="text-muted">/orgs/</span> in the
+              URL).
             </div>
           </div>
 
@@ -168,7 +173,7 @@ export default function LoginPage() {
                 Signing in…
               </>
             ) : (
-              "Sign in →"
+              "Sign in"
             )}
           </button>
         </form>

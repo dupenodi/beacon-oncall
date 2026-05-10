@@ -24,7 +24,7 @@ npm install
 npm run dev
 ```
 
-- App: [http://localhost:3000](http://localhost:3000) — login shows **seeded demo** shortcuts after `db:seed`.
+- App: [http://localhost:3000](http://localhost:3000) — login includes **demo sample accounts** after `npm run db:seed`.
 - API: [http://localhost:3001/health](http://localhost:3001/health)
 
 ```bash
