@@ -1,6 +1,8 @@
 # beacon-oncall
 
-Private **incident routing / escalation** portfolio (multi-tenant API, timer-based escalation, webhooks, email, action agent—see plan in repo wiki or your local notes).
+Private **incident routing / escalation** portfolio (multi-tenant API, timer-based escalation, webhooks, email, action agent).
+
+**Implementation spec:** [`docs/BEACON_SPEC.md`](docs/BEACON_SPEC.md) (checkpoints CP00–CP10).
 
 ## Monorepo layout
 
@@ -20,7 +22,7 @@ Private **incident routing / escalation** portfolio (multi-tenant API, timer-bas
 ```bash
 cd beacon-oncall
 cp .env.example .env
-# edit .env — set DATABASE_URL when you want /health/db to pass
+# edit .env — set DATABASE_URL, APP_MASTER_KEY (see .env.example)
 
 npm install
 npm run dev
@@ -34,12 +36,21 @@ Stop dev: `Ctrl+C` (concurrently kills both).
 ## Database migrations
 
 ```bash
-# after changing packages/db/src/schema.ts
-DATABASE_URL="postgresql://..." npm run db:generate
+# Apply committed migrations to your database (Neon or local Postgres)
 DATABASE_URL="postgresql://..." npm run db:migrate
 ```
 
-Initial migration lives under [`packages/db/drizzle/`](packages/db/drizzle/).
+If you previously ran the old **`beacon_meta`** placeholder migration, **reset that database** (or `DROP TABLE beacon_meta;`) before applying the new baseline migration `0000_faulty_firelord.sql`.
+
+After migrate, seed demo data (org `demo`, users, service, 2-step policy):
+
+```bash
+DATABASE_URL="postgresql://..." APP_MASTER_KEY="$(openssl rand -hex 32)" npm run db:seed
+```
+
+The seed prints a **dev-only** webhook plaintext (`whsec_dev_demo_change_me`) for later simulator / CP04 work.
+
+Schema + migrations live under [`packages/db/`](packages/db/).
 
 ## Scripts
 
@@ -50,6 +61,7 @@ Initial migration lives under [`packages/db/drizzle/`](packages/db/drizzle/).
 | `npm run typecheck` | `tsc` in all workspaces |
 | `npm run db:generate` | Drizzle SQL from schema |
 | `npm run db:migrate` | Apply migrations |
+| `npm run db:seed` | Insert demo org/service/policy (requires `APP_MASTER_KEY`) |
 
 ## CI
 
