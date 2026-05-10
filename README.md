@@ -25,7 +25,7 @@ Private **incident routing / escalation** portfolio (multi-tenant API, timer-bas
 ```bash
 cd beacon-oncall
 cp .env.example .env
-# edit .env — set DATABASE_URL, APP_MASTER_KEY, INTERNAL_TICK_SECRET (tick), optional RESEND_* (see .env.example)
+# edit .env — every variable is documented in .env.example with "how to get" notes
 
 npm install
 npm run dev
@@ -136,16 +136,103 @@ See [`tools/go-relay/README.md`](tools/go-relay/README.md). Build with Go 1.22+;
 | `npm run dev` | API + web in parallel |
 | `npm run build` | Production build (web then api) |
 | `npm run typecheck` | `tsc` in all workspaces |
-| `npm test` | Vitest in workspaces that define `test` |
+| `npm test` | Vitest in workspaces that define `test` (API unit tests only; Postgres integration is separate) |
 | `npm run verify` | `typecheck` + `test` + `build` (local gate before push) |
 | `npm run db:generate` | Drizzle SQL from schema |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Insert demo org/service/policy (requires `APP_MASTER_KEY`) |
+| `npm run test:integration` | Postgres + Testcontainers suite (`tick`, resolve skip, ack/tick race, webhook dedupe, CP09 approve mock); requires Docker |
 | `npm run start -w @beacon/simulator -- …` | Run simulator CLI (see CP07; args after `--`) |
 
 ## CI
 
-GitHub Actions runs `npm ci` and `npm run verify` on pushes/PRs to `main` (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+GitHub Actions runs `npm ci` and `npm run verify` on pushes/PRs to `main`, plus a separate **`integration`** job that runs `npm run test:integration -w @beacon/api` (Docker on the runner). See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+## Deployment (ordered checklist)
+
+**Environment variable reference:** every key the apps use, plus **how to obtain** each one, is documented in [`.env.example`](.env.example). Copy it to `.env` for local dev (`cp .env.example .env`). Production values go in your host’s **secret manager** / dashboard, not in git.
+
+1. **Postgres** — Create a database (Neon, RDS, Cloud SQL, etc.). Copy the connection string into **`DATABASE_URL`** (see `.env.example`). The API and migration scripts must reach it from your laptop or CI (use `sslmode=require` in the URL for typical cloud hosts).
+
+2. **Core secrets** — Set **`APP_MASTER_KEY`** (`openssl rand -hex 32`) and **`INTERNAL_TICK_SECRET`** (≥ 32 random characters, e.g. `openssl rand -hex 32`). Same `INTERNAL_TICK_SECRET` value is used for **`X-Internal-Auth`** when calling `/internal/tick`. Store in the platform’s env UI; never commit.
+
+3. **Migrations** — On a machine that can reach the DB, from repo root:  
+   `DATABASE_URL="postgresql://…" npm run db:migrate`  
+   Run once per new database before serving traffic.
+
+4. **Seed (non‑prod only, optional)** — Demo org and users:  
+   `DATABASE_URL="…" APP_MASTER_KEY="…" npm run db:seed`  
+   Override demo password with **`DEMO_SEED_PASSWORD`** if you set it before seeding. For real production tenants, plan a separate onboarding path instead of the dev seed.
+
+5. **Deploy API** — Build/run `apps/api` on Node 20+. Required env: **`DATABASE_URL`**, **`APP_MASTER_KEY`**, **`INTERNAL_TICK_SECRET`**, **`NODE_ENV=production`**. Optional: **`API_PORT`**, **`RESEND_API_KEY`** + **`EMAIL_FROM`**, **`PUBLIC_WEB_ORIGIN`**, **`OPENAI_API_KEY`** (+ **`OPENAI_MODEL`**), session overrides in `.env.example`.
+
+6. **Deploy web** — Build/run `apps/web` (Next.js). Set **`NEXT_PUBLIC_API_URL`** to the **browser-visible** API origin (e.g. `https://api.yourdomain.com`, no trailing slash). Rebuild the web app whenever this changes (it is baked in at build time).
+
+7. **Cookies / cross-origin** — Sessions use **HttpOnly**, **SameSite=Lax**, **Secure** when `NODE_ENV=production`. If web and API are on different registrable domains, login flows that rely on cookies to the API origin need a deliberate layout (shared parent domain, reverse proxy under one host, or future token-based changes).
+
+8. **GitHub Actions** — Not stored in `.env`. In the repo **Settings → Secrets and variables → Actions**, configure:  
+   - **Tick:** `API_BASE_URL`, `INTERNAL_TICK_SECRET` (see [`.github/workflows/tick.yml`](.github/workflows/tick.yml)).  
+   - **Simulator (optional):** `SIM_BASE_URL`, `SIM_ORG_SLUG`, `SIM_SERVICE_ID`, `SIM_WEBHOOK_SECRET` (see [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml)). Names and meanings are summarized at the bottom of `.env.example`.
+
+9. **Smoke test** — `GET /health` and `GET /health/db` on the API; open the web app, sign in, list incidents; `GET /public/<orgSlug>/status` without auth; optional `POST …/internal/tick` with `X-Internal-Auth: <INTERNAL_TICK_SECRET>`.
+
+### Deploy online: Vercel (web) + Render (API) — where to click
+
+This app is **two processes**: a **Next.js** site (`apps/web`) and a **long-running Node HTTP API** (`apps/api`, Hono + `@hono/node-server`). **Vercel is ideal for the Next app.** The API is a normal Node server, so run it on **Render**, **Railway**, **Fly.io**, or similar—not as a serverless-only bundle unless you add a Vercel adapter later.
+
+#### A. API on Render (recommended)
+
+1. Open **[render.com](https://render.com)** → sign in → **Dashboard**.
+2. Click **New +** → **Web Service**.
+3. **Connect** your GitHub account if asked → select the **`beacon-oncall`** repository.
+4. Configure the service:
+   - **Name:** e.g. `beacon-api`
+   - **Region:** closest to you / your DB
+   - **Branch:** `main` (or your default branch)
+   - **Root directory:** leave **empty** (repo root) so `npm` workspaces resolve.
+   - **Runtime:** **Node**
+   - **Build command:** `npm ci && npm run build -w @beacon/api`
+   - **Start command:** `npm run start -w @beacon/api`
+5. Open **Environment** (left sidebar or tab) → **Add environment variable** for each production value from [`.env.example`](.env.example), at minimum:
+   - `DATABASE_URL`, `APP_MASTER_KEY`, `INTERNAL_TICK_SECRET`, `NODE_ENV=production`
+   - Optional: `RESEND_API_KEY`, `EMAIL_FROM`, `PUBLIC_WEB_ORIGIN`, `OPENAI_API_KEY`, etc.
+6. Under **Health Check Path**, set **`/health`** if the UI offers it.
+7. Click **Create Web Service** and wait for deploy. Copy the **public URL** (e.g. `https://beacon-api.onrender.com`) — you will use it as **`NEXT_PUBLIC_API_URL`** for the web app.
+
+**Migrations:** run `DATABASE_URL=… npm run db:migrate` once from your laptop (or a one-off Render **Shell** / local script) against the **same** database before relying on the deployed API.
+
+#### B. Web on Vercel
+
+1. Open **[vercel.com](https://vercel.com)** → **Log in** → **Add New…** → **Project**.
+2. **Import** the same GitHub repo (`beacon-oncall`).
+3. Under **Configure Project**:
+   - **Root Directory:** **`apps/web`**
+   - **Framework Preset:** Next.js (default).
+   - **Install Command:** `cd ../.. && npm ci`  
+     (must run from monorepo root so workspaces and `package-lock.json` resolve.)
+   - **Build Command:** `cd ../.. && npm run build -w @beacon/web`
+4. **Environment Variables** (same screen or **Settings → Environment Variables**):
+   - `NEXT_PUBLIC_API_URL` = your **Render API URL** (e.g. `https://beacon-api.onrender.com`, no trailing slash).
+   - `NODE_ENV` = `production` (often set automatically).
+5. **Deploy**. After the first deploy, open the **`.vercel.app`** URL Vercel shows.
+
+**If the build fails:** In the project **Settings → General → Root Directory**, confirm `apps/web`. Check the **Build** log: `npm ci` must run from the directory that contains the root `package-lock.json` (`cd ../..` from `apps/web`).
+
+#### C. Both apps on Render (alternative)
+
+Repeat **section A** twice: one Web Service for the API (same build/start as above), a second Web Service for the web with **Build:** `npm ci && npm run build -w @beacon/web` and **Start:** `npm run start -w @beacon/web`, and env **`NEXT_PUBLIC_API_URL`** pointing at the first service’s URL.
+
+#### Cookies note (web and API on different hosts)
+
+The UI logs in against the **API** origin; the session cookie is set for that host. Putting **API** and **Web** on different apex domains (e.g. Vercel + Render defaults) often breaks cookie-based login in the browser. Mitigations: use a **custom domain** so both sit under one site (e.g. `app.yourdomain.com` and `api.yourdomain.com` with careful configuration), put **both** behind one reverse proxy, or plan a **token-in-header** auth change for strict cross-origin setups.
+
+### Optional: real GitHub comment (CP09 manual)
+
+1. Fork a repo with at least one issue (note `owner/repo` and issue number `1` or another).
+2. Create a fine-grained PAT with **Issues: write** on that fork.
+3. In the app as org **owner**: `PUT /v1/orgs/:orgSlug/integrations/github` with `{ "pat": "…", "defaultRepo": "yourfork/yourrepo" }`.
+4. Open an incident → **Agent** → create action run (mock model proposes `issue_number: 1` unless you use OpenAI with structured output).
+5. **Approve** — should create a comment on the issue; verify in the GitHub UI.
 
 ## GitHub repo bootstrap (one-time)
 

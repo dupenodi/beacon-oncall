@@ -503,7 +503,7 @@ Use a **real Postgres** via docker compose service `postgres:16` in CI optional 
 ### CP06
 
 - [x] `/internal/tick` implements pseudocode F with metrics.
-- [ ] Tests for tick + race + resolve pass (optional Postgres / Testcontainers job; not required for local Vitest).
+- [x] Tests for tick + race + resolve + webhook dedupe pass against Postgres (`npm run test:integration -w @beacon/api`, Testcontainers; CI job `integration`).
 
 ### CP07
 
@@ -518,7 +518,7 @@ Use a **real Postgres** via docker compose service `postgres:16` in CI optional 
 ### CP09
 
 - [x] Mock model tests pass CI without `OPENAI_API_KEY` (`@beacon/ai` Vitest).
-- [ ] Approve path executes `github.issue_comment` against test repo (requires real GitHub PAT + repo in fork secrets).
+- [x] Approve path executes `github.issue_comment` (integration test mocks GitHub HTTP + asserts URL/body/PAT; optional manual check with real PAT + fork repo below).
 
 ### CP10
 
