@@ -67,6 +67,27 @@ curl -s -b /tmp/beacon.cookies http://localhost:3001/v1/orgs/demo/services
 
 Org routes return **403** if the signed-in user has no membership for that org slug.
 
+### Incidents (CP03)
+
+Create requires a **bound policy with at least step 0** on the target service (the seed already sets this up).
+
+```bash
+# after login (see cookie jar above), replace SERVICE_ID from GET .../services
+curl -s -b /tmp/beacon.cookies http://localhost:3001/v1/orgs/demo/services
+curl -s -b /tmp/beacon.cookies -X POST http://localhost:3001/v1/orgs/demo/incidents \
+  -H 'Content-Type: application/json' \
+  -d '{"serviceId":"'"$SERVICE_ID"'","title":"Payments elevated errors","severity":"SEV2"}'
+
+curl -s -b /tmp/beacon.cookies 'http://localhost:3001/v1/orgs/demo/incidents?status=open'
+curl -s -b /tmp/beacon.cookies http://localhost:3001/v1/orgs/demo/incidents/INCIDENT_ID
+curl -s -b /tmp/beacon.cookies http://localhost:3001/v1/orgs/demo/incidents/INCIDENT_ID/events
+curl -s -b /tmp/beacon.cookies -X POST http://localhost:3001/v1/orgs/demo/incidents/INCIDENT_ID/ack
+curl -s -b /tmp/beacon.cookies -X POST http://localhost:3001/v1/orgs/demo/incidents/INCIDENT_ID/resolve
+```
+
+- **Ack** is only valid when `status` is `open` (409 otherwise).
+- **Resolve** is allowed from `open` or `acknowledged`, and is **idempotent** when already `resolved` (204).
+
 Schema + migrations live under [`packages/db/`](packages/db/).
 
 ## Scripts

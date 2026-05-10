@@ -1,0 +1,148 @@
+import { Hono } from "hono";
+import { z } from "zod";
+import { getDb } from "../lib/db";
+import { requireOrgMembership } from "../middleware/require-org";
+import {
+  ackIncident,
+  getIncidentForOrg,
+  listIncidentEventsForOrg,
+  listIncidentsForOrg,
+  openIncidentManual,
+  resolveIncident,
+} from "../services/incidents";
+import { createConsoleNotifier } from "../services/notify";
+
+const manualCreateIncidentSchema = z.object({
+  serviceId: z.string().uuid(),
+  title: z.string().min(1).max(200),
+  severity: z.enum(["SEV1", "SEV2", "SEV3", "SEV4"]).optional(),
+});
+
+const statusQuerySchema = z.enum(["open", "acknowledged", "resolved"]).optional();
+
+export const incidentRoutes = new Hono();
+
+incidentRoutes.use("*", requireOrgMembership);
+
+incidentRoutes.post("/", async (c) => {
+  const org = c.get("org");
+  const user = c.get("user");
+  if (!user) {
+    return c.json({ error: { code: "unauthorized", message: "Sign in required" } }, 401);
+  }
+
+  const parsed = manualCreateIncidentSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json({ error: { code: "validation_error", message: parsed.error.flatten() } }, 400);
+  }
+
+  const { db } = getDb();
+  const notifier = createConsoleNotifier();
+  const result = await openIncidentManual(db, notifier, {
+    orgId: org.id,
+    serviceId: parsed.data.serviceId,
+    title: parsed.data.title,
+    severity: parsed.data.severity,
+    openedByUserId: user.id,
+  });
+
+  if (!result.ok) {
+    if (result.error.code === "service_not_found") {
+      return c.json({ error: { code: "not_found", message: "Service not found in this organization" } }, 404);
+    }
+    return c.json({ error: { code: "policy_missing", message: "Service has no bound policy or no escalation steps" } }, 400);
+  }
+
+  return c.json({ incidentId: result.incidentId }, 201);
+});
+
+incidentRoutes.get("/", async (c) => {
+  const org = c.get("org");
+  const raw = c.req.query("status");
+  const statusParsed = statusQuerySchema.safeParse(raw === undefined || raw === "" ? undefined : raw);
+  if (!statusParsed.success) {
+    return c.json({ error: { code: "validation_error", message: "Invalid status query" } }, 400);
+  }
+
+  const { db } = getDb();
+  const rows = await listIncidentsForOrg(db, { orgId: org.id, status: statusParsed.data });
+  return c.json({ incidents: rows });
+});
+
+incidentRoutes.get("/:incidentId/events", async (c) => {
+  const org = c.get("org");
+  const incidentId = c.req.param("incidentId");
+  if (!z.string().uuid().safeParse(incidentId).success) {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+
+  const { db } = getDb();
+  const events = await listIncidentEventsForOrg(db, { orgId: org.id, incidentId });
+  if (!events) {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+
+  return c.json({ events });
+});
+
+incidentRoutes.get("/:incidentId", async (c) => {
+  const org = c.get("org");
+  const incidentId = c.req.param("incidentId");
+  if (!z.string().uuid().safeParse(incidentId).success) {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+
+  const { db } = getDb();
+  const detail = await getIncidentForOrg(db, { orgId: org.id, incidentId, timelineLimit: 20 });
+  if (!detail) {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+
+  return c.json(detail);
+});
+
+incidentRoutes.post("/:incidentId/ack", async (c) => {
+  const org = c.get("org");
+  const user = c.get("user");
+  if (!user) {
+    return c.json({ error: { code: "unauthorized", message: "Sign in required" } }, 401);
+  }
+
+  const incidentId = c.req.param("incidentId");
+  if (!z.string().uuid().safeParse(incidentId).success) {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+
+  const { db } = getDb();
+  const outcome = await ackIncident(db, { orgId: org.id, incidentId, actorUserId: user.id });
+  if (outcome === "not_found") {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+  if (outcome === "invalid_state") {
+    return c.json({ error: { code: "invalid_state", message: "Ack is only allowed when status is open" } }, 409);
+  }
+  return c.body(null, 204);
+});
+
+incidentRoutes.post("/:incidentId/resolve", async (c) => {
+  const org = c.get("org");
+  const user = c.get("user");
+  if (!user) {
+    return c.json({ error: { code: "unauthorized", message: "Sign in required" } }, 401);
+  }
+
+  const incidentId = c.req.param("incidentId");
+  if (!z.string().uuid().safeParse(incidentId).success) {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+
+  const { db } = getDb();
+  const outcome = await resolveIncident(db, { orgId: org.id, incidentId, actorUserId: user.id });
+  if (outcome === "not_found") {
+    return c.json({ error: { code: "not_found", message: "Incident not found" } }, 404);
+  }
+  if (outcome === "invalid_state") {
+    return c.json({ error: { code: "invalid_state", message: "Cannot resolve incident in this state" } }, 409);
+  }
+  return c.body(null, 204);
+});

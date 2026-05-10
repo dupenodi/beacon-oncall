@@ -487,7 +487,7 @@ Use a **real Postgres** via docker compose service `postgres:16` in CI optional 
 
 ### CP03
 
-- [ ] Manual create returns 201; list/filter works; ack/resolve transitions match Frozen table.
+- [x] Manual create returns 201; list/filter works; ack/resolve transitions match Frozen table.
 
 ### CP04
 

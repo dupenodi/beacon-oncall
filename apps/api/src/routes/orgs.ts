@@ -4,6 +4,7 @@ import { services } from "@beacon/db/schema";
 import { getDb } from "../lib/db";
 import { loadSession, requireUser } from "../middleware/session";
 import { requireOrgMembership } from "../middleware/require-org";
+import { incidentRoutes } from "./incidents";
 
 export const orgRoutes = new Hono();
 
@@ -32,3 +33,5 @@ orgRoutes.get("/:orgSlug/services", requireOrgMembership, async (c) => {
 
   return c.json({ services: rows });
 });
+
+orgRoutes.route("/:orgSlug/incidents", incidentRoutes);

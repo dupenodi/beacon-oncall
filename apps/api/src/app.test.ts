@@ -37,4 +37,10 @@ describe("createApp", () => {
     const res = await app.request("http://localhost/v1/orgs/demo/me");
     expect(res.status).toBe(401);
   });
+
+  it("GET /v1/orgs/demo/incidents without session returns 401", async () => {
+    const app = createApp();
+    const res = await app.request("http://localhost/v1/orgs/demo/incidents");
+    expect(res.status).toBe(401);
+  });
 });
