@@ -1,9 +1,16 @@
+# Calls POST {API_BASE_URL}/internal/tick on a schedule so escalation timers advance in production.
+# Set secrets API_BASE_URL and INTERNAL_TICK_SECRET (same value as on the API) or the job no-ops.
+# For sub-minute precision, use your host’s native cron, Kubernetes CronJob, or tools/go-relay instead.
 name: tick
 
 on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
+
+concurrency:
+  group: beacon-internal-tick
+  cancel-in-progress: false
 
 jobs:
   tick:
@@ -15,7 +22,7 @@ jobs:
           INTERNAL_TICK_SECRET: ${{ secrets.INTERNAL_TICK_SECRET }}
         run: |
           if [ -z "$API_BASE_URL" ] || [ -z "$INTERNAL_TICK_SECRET" ]; then
-            echo "Skip: set API_BASE_URL and INTERNAL_TICK_SECRET in repo secrets to enable."
+            echo "Tick skipped: add Actions secrets API_BASE_URL and INTERNAL_TICK_SECRET to enable scheduled escalation processing."
             exit 0
           fi
           curl -fsS -X POST "$API_BASE_URL/internal/tick" \

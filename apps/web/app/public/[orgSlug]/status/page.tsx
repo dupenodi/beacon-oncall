@@ -47,10 +47,10 @@ export default async function PublicStatusPage(props: { params: Promise<{ orgSlu
       <div className="status-page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--text-secondary)" }}>
-            Unable to reach the status API
+            Status could not be loaded
           </div>
           <div className="text-sm text-muted" style={{ marginTop: 8 }}>
-            Set <code className="text-accent">NEXT_PUBLIC_API_URL</code> to your Beacon API URL, or try again later.
+            Try again in a moment.
           </div>
         </div>
       </div>
@@ -65,7 +65,7 @@ export default async function PublicStatusPage(props: { params: Promise<{ orgSlu
             Status page not found
           </div>
           <div className="text-sm text-muted" style={{ marginTop: 8 }}>
-            Organization <strong>{orgSlug}</strong> does not exist.
+            Check the link or ask the team that shared it.
           </div>
         </div>
       </div>
@@ -131,7 +131,7 @@ export default async function PublicStatusPage(props: { params: Promise<{ orgSlu
           </span>
         </div>
 
-        <div className="status-system-name">System Status</div>
+        <div className="status-system-name">Service status</div>
 
         <div className={`status-pill ${systemStatus}`}>
           <span className="status-pill-dot" />
@@ -284,7 +284,7 @@ export default async function PublicStatusPage(props: { params: Promise<{ orgSlu
               </svg>
             </div>
             <span style={{ fontFamily: "var(--font-display)", fontSize: 12, color: "var(--text-muted)" }}>
-              Powered by Beacon
+              Status by Beacon
             </span>
           </div>
           <span style={{ fontSize: 11, color: "var(--text-muted)" }}>

@@ -47,7 +47,7 @@ export class OpenAiChatModel implements ChatModel {
           },
           {
             role: "user",
-            content: `Incident id: ${input.incidentId}. Org id: ${input.orgId}. Default repository is "${defaultRepo}" (use this owner/repo unless clearly wrong). Propose an issue_number in that repo (often 1 for demos).`,
+            content: `Incident id: ${input.incidentId}. Org id: ${input.orgId}. Default repository is "${defaultRepo}" (use this owner/repo unless clearly wrong). Propose an issue_number in that repo (use the most likely open issue if unclear).`,
           },
         ],
       }),

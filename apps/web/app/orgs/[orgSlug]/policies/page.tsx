@@ -168,10 +168,7 @@ export default function PoliciesPage(props: { params: Promise<{ orgSlug: string 
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    // Fetch org members to populate user selector
-    // (no direct members endpoint, use hack via me endpoint pattern)
-    // We'll pre-seed with empty — users must be seeded in DB
-    // For demo, try fetching the me endpoint and infer from session
+    // Populate notify-user dropdown from the signed-in session until a members API exists.
     fetch(`${API_BASE}/v1/auth/me`, { credentials: "include" })
       .then((r) => r.json())
       .then((j) => {
@@ -187,7 +184,7 @@ export default function PoliciesPage(props: { params: Promise<{ orgSlug: string 
         <div className="page-header-top">
           <div>
             <h1 className="page-title">Escalation Policies</h1>
-            <p className="page-subtitle">Define who gets paged and when</p>
+            <p className="page-subtitle">Who gets notified, and when, while an incident is open</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -213,8 +210,8 @@ export default function PoliciesPage(props: { params: Promise<{ orgSlug: string 
             <svg style={{ width: 44, height: 44, marginBottom: 16, opacity: 0.2 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
             </svg>
-            <div className="empty-title">No policies yet</div>
-            <div className="empty-text">Create an escalation policy and assign it to services.</div>
+            <div className="empty-title">No escalation policies</div>
+            <div className="empty-text">Create a policy, then attach it to each service you monitor.</div>
           </div>
         )}
 
@@ -242,9 +239,8 @@ export default function PoliciesPage(props: { params: Promise<{ orgSlug: string 
         )}
 
         <div className="alert alert-info" style={{ marginTop: 24, maxWidth: 560 }}>
-          <strong>How it works:</strong> When an incident opens, step 0 fires immediately.
-          If not acknowledged within the step&apos;s wait time, the next step fires.
-          After all steps, escalation is marked exhausted.
+          When an incident opens, the first person on this policy is notified. If it stays open, the next person is
+          notified after each wait time. When everyone on the chain has been reached, paging stops for that incident.
         </div>
       </div>
 

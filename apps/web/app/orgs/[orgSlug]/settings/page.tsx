@@ -64,7 +64,7 @@ export default function SettingsPage(props: { params: Promise<{ orgSlug: string 
       setGhError((j as { error?: string }).error ?? "Failed (owner only)");
       return;
     }
-    setGhSuccess("GitHub integration saved.");
+    setGhSuccess("GitHub connection saved.");
     setGhForm({ pat: "", defaultRepo: "" });
     await loadGithub();
   };
@@ -75,7 +75,7 @@ export default function SettingsPage(props: { params: Promise<{ orgSlug: string 
         <div className="page-header-top">
           <div>
             <h1 className="page-title">Settings</h1>
-            <p className="page-subtitle">Organization configuration and integrations</p>
+            <p className="page-subtitle">Webhooks and GitHub</p>
           </div>
         </div>
       </div>
@@ -89,9 +89,8 @@ export default function SettingsPage(props: { params: Promise<{ orgSlug: string 
           </div>
           <div className="card-body">
             <p className="text-sm text-secondary" style={{ marginBottom: 14, lineHeight: 1.7 }}>
-              Used to sign inbound webhook requests via HMAC-SHA256.
-              Rotating generates a new secret — update your webhook sender immediately.
-              The plaintext is shown once.
+              Systems that call your ingest URL must sign requests with this secret. If you rotate it, update them
+              right away — the new value is shown only once.
             </p>
 
             {secretError && <div className="alert alert-error">{secretError}</div>}
@@ -156,8 +155,8 @@ export default function SettingsPage(props: { params: Promise<{ orgSlug: string 
           </div>
           <div className="card-body">
             <p className="text-sm text-secondary" style={{ marginBottom: 14, lineHeight: 1.7 }}>
-              Allows the AI Action Agent to post GitHub issue comments as remediation actions.
-              Provide a Personal Access Token with <code style={{ color: "var(--accent)", fontSize: 12 }}>repo</code> scope.
+              Lets Beacon post comments on GitHub issues when you approve a step. Use a personal access token with{" "}
+              <code style={{ color: "var(--accent)", fontSize: 12 }}>repo</code> access to the repository below.
             </p>
 
             {ghConfigured && ghDefaultRepo && (

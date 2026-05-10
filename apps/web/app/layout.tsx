@@ -18,8 +18,8 @@ function RootFallback() {
 }
 
 export const metadata: Metadata = {
-  title: "Beacon — Incident Management",
-  description: "On-call alerting and incident escalation",
+  title: "Beacon — On-call & incidents",
+  description: "Track incidents, escalations, and service status.",
   icons: {
     icon: [
       {

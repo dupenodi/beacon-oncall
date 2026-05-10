@@ -40,7 +40,7 @@ export default function LoginPage() {
       }
       window.location.href = `/orgs/${orgSlug}/incidents`;
     } catch {
-      setError("Could not connect to API. Is it running?");
+      setError("Could not reach the server. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export default function LoginPage() {
           </div>
           <div>
             <div className="login-heading">Beacon</div>
-            <div className="login-sub">Incident Management Platform</div>
+            <div className="login-sub">On-call alerting, escalation, and incident response</div>
           </div>
         </div>
 
@@ -93,16 +93,22 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="org">Organization Slug</label>
+            <label className="form-label" htmlFor="org">Organization</label>
             <input
               id="org"
               type="text"
               className="form-input"
-              placeholder="your-org"
+              placeholder="your-workspace"
               value={orgSlug}
               onChange={(e) => setOrgSlug(e.target.value)}
               required
+              autoCapitalize="none"
+              spellCheck={false}
             />
+            <div className="text-xs text-muted" style={{ marginTop: 6, lineHeight: 1.5 }}>
+              Same value as in your Beacon link after <span className="text-muted">/orgs/</span> — ask your admin if
+              you are unsure.
+            </div>
           </div>
 
           <button
@@ -121,14 +127,6 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-
-        <div style={{ marginTop: 24, padding: "14px 16px", background: "var(--bg-elevated)", borderRadius: "var(--r)", border: "1px solid var(--border)" }}>
-          <div className="text-xs text-muted" style={{ marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>Demo Credentials</div>
-          <div className="text-sm text-secondary">
-            <div>owner@demo.invalid / <span className="text-accent">demo</span></div>
-            <div>oncall@demo.invalid / <span className="text-accent">demo</span></div>
-          </div>
-        </div>
       </div>
     </div>
   );

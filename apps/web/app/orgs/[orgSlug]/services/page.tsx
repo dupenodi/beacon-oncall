@@ -202,7 +202,7 @@ export default function ServicesPage(props: { params: Promise<{ orgSlug: string 
         <div className="page-header-top">
           <div>
             <h1 className="page-title">Services</h1>
-            <p className="page-subtitle">Monitored services and their escalation policies</p>
+            <p className="page-subtitle">Each service needs an escalation policy before it can receive incidents</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -228,8 +228,8 @@ export default function ServicesPage(props: { params: Promise<{ orgSlug: string 
             <svg style={{ width: 44, height: 44, marginBottom: 16, opacity: 0.2 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
             </svg>
-            <div className="empty-title">No services yet</div>
-            <div className="empty-text">Add a service to start monitoring it.</div>
+            <div className="empty-title">No services</div>
+            <div className="empty-text">Add a service, then assign an escalation policy to it.</div>
           </div>
         )}
 

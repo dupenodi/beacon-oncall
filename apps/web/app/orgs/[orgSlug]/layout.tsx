@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 import Sidebar from "@/components/Sidebar";
 
-/**
- * Client pages under /orgs/* use `use(params)` with a Promise. Next/React need a
- * Suspense ancestor during SSR/prerender; without it, Vercel can return 500
- * (FUNCTION_INVOCATION_FAILED) for those routes.
- */
+/** Suspense wraps org routes that unwrap async `params` on the client during SSR. */
 function OrgMainFallback() {
   return (
     <div className="main-content">

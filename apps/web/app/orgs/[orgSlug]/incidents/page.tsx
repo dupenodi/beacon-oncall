@@ -177,7 +177,7 @@ export default function IncidentsPage(props: { params: Promise<{ orgSlug: string
         <div className="page-header-top">
           <div>
             <h1 className="page-title">Incidents</h1>
-            <p className="page-subtitle">Active and historical incident log for {orgSlug}</p>
+            <p className="page-subtitle">All incidents for {orgSlug}</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -225,7 +225,9 @@ export default function IncidentsPage(props: { params: Promise<{ orgSlug: string
             </svg>
             <div className="empty-title">No incidents</div>
             <div className="empty-text">
-              {filter === "all" ? "Everything is calm. No incidents found." : `No ${filter} incidents.`}
+              {filter === "all"
+                ? "No incidents yet. Open one when something needs attention."
+                : `No ${filter} incidents.`}
             </div>
           </div>
         )}

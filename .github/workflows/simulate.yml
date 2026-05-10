@@ -1,9 +1,15 @@
+# Optional synthetic webhook traffic (beacon-sim steady). Set all SIM_* secrets or the job no-ops.
+# Intended for staging / demos — do not point at production without safeguards.
 name: simulate
 
 on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
+
+concurrency:
+  group: beacon-simulator-steady
+  cancel-in-progress: false
 
 jobs:
   steady:
@@ -23,7 +29,7 @@ jobs:
           SIM_WEBHOOK_SECRET: ${{ secrets.SIM_WEBHOOK_SECRET }}
         run: |
           if [ -z "$SIM_BASE_URL" ] || [ -z "$SIM_ORG_SLUG" ] || [ -z "$SIM_SERVICE_ID" ] || [ -z "$SIM_WEBHOOK_SECRET" ]; then
-            echo "Skip: set SIM_* secrets to enable simulator cron."
+            echo "Simulator cron skipped: set SIM_BASE_URL, SIM_ORG_SLUG, SIM_SERVICE_ID, and SIM_WEBHOOK_SECRET to enable."
             exit 0
           fi
           npm run start -w @beacon/simulator -- steady \

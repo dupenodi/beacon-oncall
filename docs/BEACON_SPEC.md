@@ -71,7 +71,7 @@
 |------|----|---------|
 | [packages/db/src/schema.ts](packages/db/src/schema.ts) | CP01 | Replace placeholder with real tables (split into `schema/*.ts` if file grows). |
 | [packages/db/drizzle/](packages/db/drizzle/) | CP01 | Generated SQL migrations only (committed). |
-| `packages/db/src/seed.ts` | CP01 | Inserts demo org/users/services/policy/steps/binding. |
+| `packages/db/src/seed.ts` | CP01 | Inserts sample org/users/service/policy/steps/binding + idempotent portfolio incidents (open / ack / resolved). |
 | `apps/api/src/lib/db.ts` | CP01 | Singleton `getDb()` using `DATABASE_URL` (wrap `createDb`). |
 | `apps/api/src/middleware/*` | CP02 | Session / org membership resolver attaching `c.set('org', ...)`, `c.set('user', ...)`. |
 | `apps/api/src/routes/*.ts` | CP03+ | Hono `Hono()` sub-apps mounted in `apps/api/src/index.ts`. |

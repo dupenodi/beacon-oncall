@@ -138,10 +138,10 @@ export default function AgentPage(props: {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
               </svg>
-              AI Action Agent
+              Suggested actions
             </h1>
             <p className="page-subtitle">
-              Incident <span className="text-accent">{incidentId.slice(0, 12)}…</span> · {orgSlug}
+              {orgSlug} · incident <span className="text-accent">{incidentId.slice(0, 12)}…</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export default function AgentPage(props: {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
               </svg>
-              Run Agent
+              Run
             </button>
             {runId && (
               <button className="btn btn-secondary" disabled={busy} onClick={() => loadRun()}>
@@ -164,7 +164,7 @@ export default function AgentPage(props: {
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
-                Approve &amp; Post
+                Approve and post
               </button>
             )}
           </div>
@@ -187,12 +187,11 @@ export default function AgentPage(props: {
             </svg>
             <div className="empty-title">No run yet</div>
             <div className="empty-text" style={{ marginBottom: 20 }}>
-              Click "Run Agent" to let AI analyze this incident and propose remediation actions.
+              Start a run to get suggested next steps for this incident. Review them carefully before you approve.
             </div>
             <div className="alert alert-info" style={{ maxWidth: 440, textAlign: "left", margin: "0 auto" }}>
-              <strong>Note:</strong> GitHub integration must be configured (owner role) before approving.
-              Set it in{" "}
-              <Link href={`/orgs/${orgSlug}/settings`}>Settings → GitHub</Link>.
+              To post comments on GitHub after you approve, an owner must connect GitHub in{" "}
+              <Link href={`/orgs/${orgSlug}/settings`}>Settings</Link>.
             </div>
           </div>
         )}
@@ -200,7 +199,7 @@ export default function AgentPage(props: {
         {busy && !run && (
           <div className="empty-state">
             <span className="loading-pulse" style={{ marginBottom: 12, width: 12, height: 12 }} />
-            <span className="text-secondary">Agent is thinking…</span>
+            <span className="text-secondary">Running…</span>
           </div>
         )}
 
@@ -314,7 +313,7 @@ export default function AgentPage(props: {
                   Approval Result
                 </div>
                 <div className="alert alert-success" style={{ marginBottom: 8 }}>
-                  Comment posted successfully.
+                  Posted to GitHub.
                   {typeof approveOut.html_url === "string" && (
                     <>
                       {" "}

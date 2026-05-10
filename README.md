@@ -1,6 +1,6 @@
-# beacon-oncall
+# Beacon On-Call
 
-Private **incident routing / escalation** portfolio (multi-tenant API, timer-based escalation, webhooks, email, action agent).
+**Beacon** is a multi-tenant **incident routing and escalation** stack: API, timer-driven `/internal/tick`, signed webhooks, email notifications, public status, and an optional action agent with GitHub publishing.
 
 **Implementation spec:** [`docs/BEACON_SPEC.md`](docs/BEACON_SPEC.md) (checkpoints CP00–CP10).
 
@@ -45,13 +45,15 @@ DATABASE_URL="postgresql://..." npm run db:migrate
 
 If you previously ran the old **`beacon_meta`** placeholder migration, **reset that database** (or `DROP TABLE beacon_meta;`) before applying the new baseline migration `0000_faulty_firelord.sql`.
 
-After migrate, seed demo data (org `demo`, users, service, 2-step policy):
+After migrate, seed the **sample workspace** (slug `demo`, two users, **Checkout API** service, two-step escalation policy, and **three portfolio incidents**: one open, one acknowledged, one resolved — with timeline events). Re-running seed is safe: incidents use stable dedupe keys and are only inserted if missing.
 
 ```bash
 DATABASE_URL="postgresql://..." APP_MASTER_KEY="$(openssl rand -hex 32)" npm run db:seed
 ```
 
-The seed prints a **dev-only** webhook plaintext (`whsec_dev_demo_change_me`) for later simulator / CP04 work. Demo users get an Argon2 password hash; default password is **`demo`** (override with `DEMO_SEED_PASSWORD` in `.env`).
+The seed prints a **dev-only** webhook plaintext (`whsec_dev_demo_change_me`) for simulators / signed webhooks. User passwords default to **`demo`** (override with `DEMO_SEED_PASSWORD` in `.env`).
+
+**Portfolio / live traffic (optional, minimal):** After deploy, sign in with `owner@demo.invalid` / `demo` / org **`demo`** — the incidents list and [`/public/demo/status`](http://localhost:3000/public/demo/status) are populated from the seed alone. To keep **new** webhook-originated incidents arriving over time, enable [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml) with the `SIM_*` secrets (see [Scheduling: GitHub Actions](#scheduling-github-actions)), or run the simulator CLI occasionally from your laptop.
 
 ### Auth (CP02)
 
@@ -109,9 +111,9 @@ Authenticated under `/v1/orgs/:orgSlug/`: `POST|GET /services`, `PATCH /services
 
 When `RESEND_API_KEY` and `EMAIL_FROM` are set, notifications use [Resend](https://resend.com); otherwise the API uses a no-op console notifier (fine for local dev).
 
-Scheduled workflows (no-op until secrets exist): [`.github/workflows/tick.yml`](.github/workflows/tick.yml), [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml).
+Scheduled GitHub Actions (optional, no-op until secrets exist) are documented under [**Scheduling: GitHub Actions**](#scheduling-github-actions).
 
-**Simulator:** `npm run start -w @beacon/simulator -- steady --baseUrl http://localhost:3001 --orgSlug demo --serviceId <uuid> --secret <plaintext>` (use `burst` with `--count N` for sequential bursts).
+**Simulator (local):** `npm run start -w @beacon/simulator -- steady --baseUrl http://localhost:3001 --orgSlug demo --serviceId <uuid> --secret <plaintext>` (use `burst` with `--count N` for sequential bursts).
 
 ### Public status (CP08)
 
@@ -140,13 +142,35 @@ See [`tools/go-relay/README.md`](tools/go-relay/README.md). Build with Go 1.22+;
 | `npm run verify` | `typecheck` + `test` + `build` (local gate before push) |
 | `npm run db:generate` | Drizzle SQL from schema |
 | `npm run db:migrate` | Apply migrations |
-| `npm run db:seed` | Insert demo org/service/policy (requires `APP_MASTER_KEY`) |
+| `npm run db:seed` | Sample org `demo`, service, policy, **three sample incidents** (requires `APP_MASTER_KEY`) |
 | `npm run test:integration` | Postgres + Testcontainers suite (`tick`, resolve skip, ack/tick race, webhook dedupe, CP09 approve mock); requires Docker |
 | `npm run start -w @beacon/simulator -- …` | Run simulator CLI (see CP07; args after `--`) |
 
 ## CI
 
 GitHub Actions runs `npm ci` and `npm run verify` on pushes/PRs to `main`, plus a separate **`integration`** job that runs `npm run test:integration -w @beacon/api` (Docker on the runner). See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+## Scheduling: GitHub Actions
+
+Escalation **timers advance only when** something successfully calls **`POST /internal/tick`** with header **`X-Internal-Auth: <INTERNAL_TICK_SECRET>`** (same secret as the API env). The repository includes two **optional** scheduled workflows:
+
+| Workflow | Default cadence | What it does |
+|----------|-----------------|--------------|
+| [`.github/workflows/tick.yml`](.github/workflows/tick.yml) | Every **5 minutes** (`*/5 * * * *`) | `curl` POSTs to `$API_BASE_URL/internal/tick`. |
+| [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml) | Every **15 minutes** | Runs `beacon-sim steady` against `$SIM_BASE_URL` for synthetic webhook traffic. |
+
+**Repository secrets** (Settings → Secrets and variables → Actions):
+
+- **Tick:** `API_BASE_URL` (public API origin, **no** trailing slash), `INTERNAL_TICK_SECRET` (must match production API).
+- **Simulator:** `SIM_BASE_URL`, `SIM_ORG_SLUG`, `SIM_SERVICE_ID`, `SIM_WEBHOOK_SECRET`. If any are unset, the simulate job exits successfully and prints a skip message—safe for forks.
+
+Both workflows support **`workflow_dispatch`** for manual runs from the Actions tab. **`concurrency`** groups prevent overlapping tick/simulator runs from piling up.
+
+**Operational notes:** GitHub-hosted schedules are best-effort (minute-level granularity; occasional drift). For **tighter SLAs**, use your platform’s native scheduler (Render cron, Fly Machines, Kubernetes `CronJob`), the optional **[`tools/go-relay`](tools/go-relay/README.md)** poller, or an external uptime service that POSTs `/internal/tick`. You can change the cron expressions in the workflow files to match your risk tolerance.
+
+## Scope beyond this repo
+
+This stack is intentionally **small and shippable**: multi-tenant API, web UI, webhooks, escalation tick, email, public status, optional action agent. Anything larger (SSO, self-serve signup, PagerDuty-style integrations, full member directory APIs) is left for a product fork — not planned here so the portfolio stays easy to run and explain.
 
 ## Deployment (ordered checklist)
 
@@ -160,9 +184,9 @@ GitHub Actions runs `npm ci` and `npm run verify` on pushes/PRs to `main`, plus 
    `DATABASE_URL="postgresql://…" npm run db:migrate`  
    Run once per new database before serving traffic.
 
-4. **Seed (non‑prod only, optional)** — Demo org and users:  
+4. **Seed (non‑prod only, optional)** — Sample workspace **`demo`** (users, service, policy, **three sample incidents**):  
    `DATABASE_URL="…" APP_MASTER_KEY="…" npm run db:seed`  
-   Override demo password with **`DEMO_SEED_PASSWORD`** if you set it before seeding. For real production tenants, plan a separate onboarding path instead of the dev seed.
+   Override passwords with **`DEMO_SEED_PASSWORD`** if set before seeding. For real tenants, replace this path with your own provisioning instead of the seed script.
 
 5. **Deploy API** — Build/run `apps/api` on Node 20+. Required env: **`DATABASE_URL`**, **`APP_MASTER_KEY`**, **`INTERNAL_TICK_SECRET`**, **`NODE_ENV=production`**. Optional: **`API_PORT`**, **`RESEND_API_KEY`** + **`EMAIL_FROM`**, **`PUBLIC_WEB_ORIGIN`**, **`OPENAI_API_KEY`** (+ **`OPENAI_MODEL`**), session overrides in `.env.example`.
 
@@ -170,9 +194,7 @@ GitHub Actions runs `npm ci` and `npm run verify` on pushes/PRs to `main`, plus 
 
 7. **Cookies / cross-origin** — Sessions use **HttpOnly**, **SameSite=Lax**, **Secure** when `NODE_ENV=production`. If web and API are on different registrable domains, login flows that rely on cookies to the API origin need a deliberate layout (shared parent domain, reverse proxy under one host, or future token-based changes).
 
-8. **GitHub Actions** — Not stored in `.env`. In the repo **Settings → Secrets and variables → Actions**, configure:  
-   - **Tick:** `API_BASE_URL`, `INTERNAL_TICK_SECRET` (see [`.github/workflows/tick.yml`](.github/workflows/tick.yml)).  
-   - **Simulator (optional):** `SIM_BASE_URL`, `SIM_ORG_SLUG`, `SIM_SERVICE_ID`, `SIM_WEBHOOK_SECRET` (see [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml)). Names and meanings are summarized at the bottom of `.env.example`.
+8. **GitHub Actions** — Secrets live in the repo, not in `.env`. See [**Scheduling: GitHub Actions**](#scheduling-github-actions) and the bottom of [`.env.example`](.env.example) for the secret names.
 
 9. **Smoke test** — `GET /health` and `GET /health/db` on the API; open the web app, sign in, list incidents; `GET /public/<orgSlug>/status` without auth; optional `POST …/internal/tick` with `X-Internal-Auth: <INTERNAL_TICK_SECRET>`.
 

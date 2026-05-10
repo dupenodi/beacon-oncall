@@ -81,7 +81,7 @@ export default function Sidebar({ orgSlug }: { orgSlug: string }) {
         </div>
         <div>
           <div className="sidebar-logo-name">Beacon</div>
-          <span className="sidebar-logo-sub">On-call</span>
+          <span className="sidebar-logo-sub">Incident response</span>
         </div>
       </div>
 
