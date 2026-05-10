@@ -40,12 +40,13 @@ authRoutes.post("/login", async (c) => {
 
   await db.insert(sessions).values({ userId: user.id, tokenHash, expiresAt });
 
+  const crossOrigin = process.env.NODE_ENV === "production";
   setCookie(c, SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: "Lax",
+    sameSite: crossOrigin ? "None" : "Lax",
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
-    secure: process.env.NODE_ENV === "production",
+    secure: crossOrigin,
   });
 
   return c.json({ user: { id: user.id, email: user.email } });
@@ -57,7 +58,11 @@ authRoutes.post("/logout", loadSession, requireUser, async (c) => {
     const { db } = getDb();
     await db.delete(sessions).where(eq(sessions.tokenHash, hashSessionToken(token)));
   }
-  deleteCookie(c, SESSION_COOKIE_NAME, { path: "/" });
+  deleteCookie(c, SESSION_COOKIE_NAME, {
+    path: "/",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: process.env.NODE_ENV === "production",
+  });
   return c.body(null, 204);
 });
 
