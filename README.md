@@ -182,6 +182,8 @@ This app is **two processes**: a **Next.js** site (`apps/web`) and a **long-runn
 
 #### A. API on Render (recommended)
 
+**Build note:** Render may run `npm ci` with production pruning. `typescript` and `@types/node` are **`dependencies`** of `@beacon/api` so `tsc` still runs; Vitest-only deps stay in `devDependencies`. A **`.node-version`** file pins Node **22** for the service (avoids picking an experimental default like 26).
+
 1. Open **[render.com](https://render.com)** → sign in → **Dashboard**.
 2. Click **New +** → **Web Service**.
 3. **Connect** your GitHub account if asked → select the **`beacon-oncall`** repository.
