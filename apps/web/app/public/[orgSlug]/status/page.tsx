@@ -39,7 +39,23 @@ function BeaconIcon() {
 export default async function PublicStatusPage(props: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await props.params;
   const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-  const res = await fetch(`${base}/public/${orgSlug}/status`, { cache: "no-store" });
+  let res: Response;
+  try {
+    res = await fetch(`${base}/public/${orgSlug}/status`, { cache: "no-store" });
+  } catch {
+    return (
+      <div className="status-page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--text-secondary)" }}>
+            Unable to reach the status API
+          </div>
+          <div className="text-sm text-muted" style={{ marginTop: 8 }}>
+            Set <code className="text-accent">NEXT_PUBLIC_API_URL</code> to your Beacon API URL, or try again later.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!res.ok) {
     return (
