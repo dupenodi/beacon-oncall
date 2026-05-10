@@ -220,6 +220,10 @@ This app is **two processes**: a **Next.js** site (`apps/web`) and a **long-runn
 
 **If the build fails:** In the project **Settings → General → Root Directory**, confirm `apps/web`. Check the **Build** log: `npm ci` must run from the directory that contains the root `package-lock.json` (`cd ../..` from `apps/web`).
 
+**If the site shows `FUNCTION_INVOCATION_FAILED` / 500 on `/`:** The app uses **middleware** to redirect `/` → `/login` (more reliable on Vercel than an RSC-only `redirect()` on the root route). Redeploy after pulling the latest `main`. Ensure **`NEXT_PUBLIC_API_URL`** is set to your real API origin so server-rendered pages (e.g. public status) can reach the backend.
+
+**“Access to storage is not allowed from this context”** in the browser console is usually **Vercel’s own overlay / an iframe / strict privacy mode**, not Beacon app code (the web UI does not use `localStorage`).
+
 #### C. Both apps on Render (alternative)
 
 Repeat **section A** twice: one Web Service for the API (same build/start as above), a second Web Service for the web with **Build:** `npm ci && npm run build -w @beacon/web` and **Start:** `npm run start -w @beacon/web`, and env **`NEXT_PUBLIC_API_URL`** pointing at the first service’s URL.
