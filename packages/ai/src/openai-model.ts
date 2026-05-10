@@ -1,3 +1,4 @@
+import { applyForcedGithubIssueNumber, getForcedGithubIssueNumber } from "./github-issue-number-env.js";
 import type { ChatModel, ChatModelInput, GithubIssueCommentInput, ToolEvent } from "./types.js";
 
 type ChatCompletionResponse = {
@@ -28,6 +29,10 @@ export class OpenAiChatModel implements ChatModel {
 
     const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
     const defaultRepo = input.defaultRepo ?? "octocat/Hello-World";
+    const forcedIssue = getForcedGithubIssueNumber();
+    const issueHint = forcedIssue
+      ? `You MUST set issue_number to exactly ${forcedIssue} (host-configured).`
+      : "Use issue_number only if that issue exists in the repo; if unsure, use 1 (do not invent high numbers).";
 
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -47,7 +52,7 @@ export class OpenAiChatModel implements ChatModel {
           },
           {
             role: "user",
-            content: `Incident id: ${input.incidentId}. Org id: ${input.orgId}. Default repository is "${defaultRepo}" (use this owner/repo unless clearly wrong). Propose an issue_number in that repo (use the most likely open issue if unclear).`,
+            content: `Incident id: ${input.incidentId}. Org id: ${input.orgId}. Default repository is "${defaultRepo}" (use this owner/repo unless clearly wrong). ${issueHint}`,
           },
         ],
       }),
@@ -64,7 +69,7 @@ export class OpenAiChatModel implements ChatModel {
       throw new Error("OpenAI returned empty content");
     }
 
-    const toolInput = parseGithubToolJson(content);
+    const toolInput = applyForcedGithubIssueNumber(parseGithubToolJson(content));
     yield {
       type: "tool_call_proposed",
       toolName: "github.issue_comment",

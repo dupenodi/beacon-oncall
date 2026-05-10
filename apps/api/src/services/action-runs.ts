@@ -1,7 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import type { BeaconDb } from "@beacon/db";
 import { decryptAes256Gcm, parseMasterKeyFromEnv } from "@beacon/db";
-import { createChatModel, postGithubIssueComment } from "@beacon/ai";
+import { applyForcedGithubIssueNumber, createChatModel, postGithubIssueComment } from "@beacon/ai";
 import { actionRuns, actionSteps, incidents, integrationsGithub } from "@beacon/db/schema";
 import { z } from "zod";
 
@@ -75,12 +75,14 @@ export async function createActionRunForIncident(
           throw new Error("invalid tool proposal from model");
         }
 
+        const toolInput = applyForcedGithubIssueNumber(parsed.data);
+
         await db.insert(actionSteps).values({
           runId: run.id,
           index: stepIndex,
           kind: "tool_call",
           toolName: "github.issue_comment",
-          toolInput: parsed.data,
+          toolInput,
           approvalStatus: "pending",
           stepStatus: "pending",
         });
@@ -180,7 +182,9 @@ export async function approveAndExecuteGithubComment(
     return { ok: false, code: "execute_failed", message: "Invalid stored tool input" };
   }
 
-  const exec = await postGithubIssueComment(pat, input.data);
+  const execInput = applyForcedGithubIssueNumber(input.data);
+
+  const exec = await postGithubIssueComment(pat, execInput);
   if (!exec.ok) {
     await db
       .update(actionSteps)
@@ -194,8 +198,8 @@ export async function approveAndExecuteGithubComment(
     if (exec.status === 404) {
       const hint =
         "GitHub returned 404 (repo, issue, or access). Check Settings → GitHub: `owner/repo` must exist, the PAT must allow **Issues: write** (or `repo` on classic), and issue #" +
-        String(input.data.issue_number) +
-        " must exist. Without OPENAI_API_KEY the mock model uses issue #1 unless you set **BEACON_MOCK_GITHUB_ISSUE_NUMBER** on the API.";
+        String(execInput.issue_number) +
+        " must exist. Set **BEACON_GITHUB_ISSUE_NUMBER** (or **BEACON_MOCK_GITHUB_ISSUE_NUMBER**) on the API to force a valid issue; without it, OpenAI may pick a non-existent number.";
       message = message ? `${message}\n\n${hint}` : hint;
     }
     return { ok: false, code: "execute_failed", message };

@@ -1,3 +1,4 @@
+import { getForcedGithubIssueNumber } from "./github-issue-number-env.js";
 import type { ChatModel, ChatModelInput, ToolEvent } from "./types.js";
 
 /** Deterministic proposal for CI / dev without `OPENAI_API_KEY`. */
@@ -10,8 +11,7 @@ export class MockChatModel implements ChatModel {
     const owner = parts[0] ?? "octocat";
     const repo = parts[1] ?? "Hello-World";
 
-    const issueFromEnv = Number.parseInt(process.env.BEACON_MOCK_GITHUB_ISSUE_NUMBER ?? "1", 10);
-    const issue_number = Number.isFinite(issueFromEnv) && issueFromEnv >= 1 ? issueFromEnv : 1;
+    const issue_number = getForcedGithubIssueNumber() ?? 1;
 
     yield {
       type: "tool_call_proposed",
