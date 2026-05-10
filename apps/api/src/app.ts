@@ -41,6 +41,8 @@ export function createApp() {
       ok: true,
       service: "beacon-api",
       time: new Date().toISOString(),
+      /** True when `OPENAI_API_KEY` is non-empty (action runs use OpenAI instead of mock). */
+      openAiConfigured: Boolean(process.env.OPENAI_API_KEY?.trim()),
     }),
   );
 
