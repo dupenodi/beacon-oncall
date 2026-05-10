@@ -10,8 +10,7 @@ export function getDb(): DbBundle {
   if (!url) {
     throw new Error("DATABASE_URL is not set");
   }
-  if (cached === undefined) {
-    cached = createDb(url);
-  }
-  return cached;
+  const bundle = cached ?? createDb(url);
+  cached = bundle;
+  return bundle;
 }
