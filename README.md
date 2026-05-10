@@ -168,6 +168,32 @@ Both workflows support **`workflow_dispatch`** for manual runs from the Actions 
 
 **Operational notes:** GitHub-hosted schedules are best-effort (minute-level granularity; occasional drift). For **tighter SLAs**, use your platform’s native scheduler (Render cron, Fly Machines, Kubernetes `CronJob`), the optional **[`tools/go-relay`](tools/go-relay/README.md)** poller, or an external uptime service that POSTs `/internal/tick`. You can change the cron expressions in the workflow files to match your risk tolerance.
 
+## GitHub Actions: first-time setup
+
+1. In GitHub open **Settings** → **Secrets and variables** → **Actions** → **New repository secret**. Create each secret below; names must match **exactly** (case-sensitive).
+
+2. **Escalation tick** — workflow [`.github/workflows/tick.yml`](.github/workflows/tick.yml) (every **5 minutes** + manual **Run workflow**):
+
+   | Secret | What to paste |
+   |--------|----------------|
+   | `API_BASE_URL` | Your public API origin, e.g. `https://your-api.onrender.com` — **no** trailing slash. |
+   | `INTERNAL_TICK_SECRET` | The **same** value as `INTERNAL_TICK_SECRET` on your API server (Render env, etc.). |
+
+3. **Synthetic webhooks** — workflow [`.github/workflows/simulate.yml`](.github/workflows/simulate.yml) (every **15 minutes** + manual run):
+
+   | Secret | What to paste |
+   |--------|----------------|
+   | `SIM_BASE_URL` | Same as `API_BASE_URL` in practice (HTTPS origin GitHub’s runner can reach). |
+   | `SIM_ORG_SLUG` | `demo` if you use the seeded org. |
+   | `SIM_SERVICE_ID` | Service UUID for **Checkout API** — from `npm run db:seed` log (`serviceId`) or `GET /v1/orgs/demo/services` while signed in. |
+   | `SIM_WEBHOOK_SECRET` | Org webhook plaintext — after seed, `whsec_dev_demo_change_me` until you rotate it in the app **Settings**. |
+
+4. **Allow Actions** (if GitHub shows workflows disabled): **Settings** → **Actions** → **General** → under **Actions permissions**, allow actions for this repository. Forks may not run schedules until you enable workflows on that fork.
+
+5. **Smoke test**: **Actions** → **tick** (or **simulate**) → **Run workflow** → **Run workflow**. Open the run: you should see a successful `POST` / `beacon-sim steady` exit **0**. If secrets are missing, the log says **skipped** and exits **0** (by design).
+
+6. **Optional local check** (API running, same values in your shell or `.env`): `npm run live:tick` and `npm run live:webhook` from the repo root (see [`.env.example`](.env.example)).
+
 ## Scope beyond this repo
 
 This stack is intentionally **small and shippable**: multi-tenant API, web UI, webhooks, escalation tick, email, public status, optional action agent. Anything larger (SSO, self-serve signup, PagerDuty-style integrations, full member directory APIs) is left for a product fork — not planned here so the portfolio stays easy to run and explain.
